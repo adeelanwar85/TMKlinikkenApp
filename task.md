@@ -1,6 +1,6 @@
 # TM Klinikken App - Task List
 
-- [ ] **Research & Initialization** <!-- id: 0 -->
+- [x] **Research & Initialization** <!-- id: 0 -->
     - [x] Scrape `www.tmklinikken.no` for color palette, theme, and structure <!-- id: 1 -->
     - [x] **DEEP SCRAPE v2** <!-- id: 17 -->
         - [x] Extract full menu hierarchy (Main > Sub > Page) <!-- id: 18 -->
@@ -8,33 +8,30 @@
         - [x] Map out all treatment categories and texts <!-- id: 20 -->
     - [x] **Visual Overhaul & Polish** <!-- id: 21 -->
         - [x] **COLOR CORRECTION**: Extract exact colors from uploaded logo/site (Burgundy/Charcoal) and update `Theme.ts` <!-- id: 22 -->
-        - [x] **LOGO**: Replace `tm-logo.png` with user uploaded `uploaded_image_1766086553958.png` <!-- id: 23 -->
-        - [x] **ANIMATION**: Remove "Legetjenester" animations. Implement subtle, aesthetic micro-interactions on Cards <!-- id: 24 -->
+        - [x] **LOGO**: Replace `tm-logo.png` with new wide logo asset (1024x235) <!-- id: 23 -->
+        - [x] **ANIMATION**: Implement subtle, aesthetic micro-interactions on Cards <!-- id: 24 -->
         - [x] **MENU**: Add "Priser" and "Bestill time" explicit options <!-- id: 25 -->
-        - [x] **ASSETS**: Download relevant images from scraped URLs for the cards (Used logo + high-quality illustrations) <!-- id: 26 -->
+        - [x] **ASSETS**: Download relevant images from scraped URLs for the cards <!-- id: 26 -->
     - [x] **Content & Features Expansion** <!-- id: 27 -->
-        - [x] **WELCOME SCREEN**: Remove "113" alert, fix logo transparency <!-- id: 28 -->
-        - [x] **DASHBOARD**: Replace 'Video' with 'Nettbutikk' (WebView), remove 'Leger' link <!-- id: 29 -->
+        - [x] **WELCOME SCREEN**: Fix logo transparency and branding <!-- id: 28 -->
+        - [x] **DASHBOARD**: Replace 'Video' with 'Butikk' (WebView), remove 'Leger' link <!-- id: 29 -->
         - [x] **ABOUT US**: Scrape `tmklinikken.no/om-oss` (Text + Employees) and rebuild `about.tsx` <!-- id: 30 -->
         - [x] **LEGAL**: Update Privacy/Terms to TM Klinikken <!-- id: 31 -->
-        - [x] **ANIMATION/ICONS**: Implemented simple monochrome Ionicons for Service Cards <!-- id: 32 -->
-        - [x] **FIXES**: Repl. Logo with Text (All Screens), Fix Employee List <!-- id: 33 -->
-        - [x] **LOGO REVERT**: Implemented **New Wide Logo** (uploaded) with correct dimensions <!-- id: 34 -->
-        - [x] **ICON SET (FINAL)**: Processed AI Icons to **White Lines / Transparent Background + Uniform Style** <!-- id: 35 -->
-    - [ ] Analyze `TM Legetjenester` reference app structure (if accessible) <!-- id: 2 -->
-    - [ ] Initialize new Expo project in `/Users/adeel/Documents/TMKlinikkenApp` <!-- id: 3 -->
-- [ ] **Implementation & Porting** <!-- id: 4 -->
+        - [x] **ICONS**: Generated & Implemented **Custom Series V3** (White/Transparent, Bold Uniform Line Art) <!-- id: 35 -->
+
+- [x] **Implementation & Porting** <!-- id: 4 -->
     - [x] Copy core directory structure (`app/`, `src/`) from reference app <!-- id: 5 -->
     - [x] Copy and adapt `AuthContext.tsx` and navigation logic <!-- id: 6 -->
     - [x] Implement new Theme based on scraped data <!-- id: 7 -->
     - [x] Refactor content labels (Legetime -> Kosmetisk behandling) <!-- id: 8 -->
-- [x] **Verification** <!-- id: 9 -->
-    - [x] Verify build and basic navigation <!-- id: 10 -->
-- [ ] **Customization & Branding Overhaul** <!-- id: 12 -->
+
+- [x] **Customization & Branding Overhaul** <!-- id: 12 -->
     - [x] Replace "TM Legetjenester" branding with "TM Klinikken" on Welcome Screen <!-- id: 13 -->
     - [x] Rebuild Dashboard Tabs to match scraped categories (Injeksjoner, Laser, etc.) <!-- id: 14 -->
     - [x] Replace Dashboard Cards with relevant aesthetic treatments <!-- id: 15 -->
     - [x] Fine-tune visual details (Fonts/Logos) to match website vibe <!-- id: 16 -->
-- [x] **Verification** <!-- id: 9 -->
-    - [x] Verify build and basic navigation <!-- id: 10 -->
-    - [x] specific design checks against TM Klinikken brand <!-- id: 11 -->
+
+- [ ] **Next Steps (Future Agents)** <!-- id: 37 -->
+    - [ ] **Remaining Icons**: Generate "V3" style icons for "Lege" and "Bestill time" cards <!-- id: 38 -->
+    - [ ] **Mobile Testing**: Verify safe areas and gradients on iOS/Android Simulators <!-- id: 39 -->
+    - [ ] **Deployment**: Configure `app.json` bundle IDs and build standalone app <!-- id: 40 -->
