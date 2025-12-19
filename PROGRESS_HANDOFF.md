@@ -1,44 +1,51 @@
 # TM Klinikken App - Progress Handoff
-**Date:** December 18, 2025
+**Date:** December 19, 2025
 **Last Agent:** Antigravity
 
 ## 🚀 Current State
-The application has been successfully transformed from "TM Legetjenester" to "**TM Klinikken**" with a complete visual overhaul.
+The application now features a **fully polished Booking Flow** integrated with the main "TM Klinikken" design language.
 
-### ✅ Completed Tasks
+### ✅ Completed Tasks (Session: Dec 19)
+1.  **Booking Flow UI (Premium Polish)**:
+    *   **Treatment List**:
+        *   Implemented `LinearGradient` header ("Velg Behandling").
+        *   **Dynamic Icons**: Implemented logic to map treatments to specific visual icons:
+            *   *Rynkebehandling* -> ✨ Sparkles (Requests for Smiley were tested but reverted to Sparkles/Default as per user preference discussion). *Wait, user actually said "Det ser ikke bra ut med smilefjes... stjernene du hadde"*. Correct.
+            *   *Filler* -> 💧 Water Drop.
+            *   *Laser* -> ⚡️ Flash.
+            *   *Hud* -> 🌹 Rose.
+    *   **Date Selection**:
+        *   Fixed **Font Issue on Web**: Calendar now correctly uses `sans-serif` (System) instead of falling back to Times New Roman.
+        *   Applied Premium Gradient header ("Velg Tid").
+    *   **Booking Summary**:
+        *   Confirmed Premium card design and layout.
+
+2.  **API / Data**:
+    *   **Mock Data**: Expanded `mockTreatments` to 7 items covering various categories (Laser, Hud, Kropp) for better UI testing.
+    *   **Type Safety**: Fixed `Service` interface mismatches (number vs string) in `hanoClient`.
+
+### ✅ Previously Completed
 1.  **Branding & Logo**:
     *   Implemented new wide logo asset (1024x235px).
-    *   **Welcome Screen**: White tint applied for contrast.
-    *   **Login & Dashboard**: Original colors (Burgundy/Black) on white background.
-    *   **Icons**: Generated and implemented a custom "Series V3" icon set for 7 main treatments (Injeksjoner, Laser, Ansikt, Hud, Kropp, Bryn, Tannbleking).
-        *   Style: Bold, Uniform Line Art, White Lines, Transparent Background.
-        *   Laser icon: "Device" style, text removed.
-        *   Kropp icon: Abstract silhouette style.
+    *   **Icons**: Custom "Series V3" icon set for main dashboard.
 
-2.  **Navigation & Structure**:
-    *   **Tabs**: Added "Priser" tab alongside "Bestill time", "Om oss", "Kontakt".
-    *   **Routing**: Fixed broken links for "Om oss" and "Kontakt".
-    *   **Webshop**: Renamed "Video" tab to "**Butikk**" (redirects to `tmklinikken.no/butikk`).
-
-3.  **Content & Pages**:
-    *   **Om oss**: Scraped content implemented, renders full `EMPLOYEES` list with images.
-    *   **Legal**: Privacy Policy and Terms updated with TM Klinikken details.
-    *   **Login**: Verified form visibility and inputs.
+2.  **Navigation**:
+    *   Tabs: "Shop", "Om oss", "Kontakt".
+    *   Routing: Fixed broken links.
 
 ### 🚧 Pending / Next Steps
-1.  **Remaining Icons**:
-    *   The icons for "Lege & Sykepleier" and "Bestill time" (in the card list) are still using generic Ionicons. Generate "V3" style icons for these to match the rest of the set.
-2.  **Mobile Testing**:
-    *   Verification has been primarily on Web (Expo Web). Native testing (iOS/Android Simulator) is recommended to ensure the safe area views and gradients look perfect on devices.
+1.  **Notifications**:
+    *   `expo-notifications` is installed but logic for scheduling reminders (24h before) needs to be implemented.
+2.  **Real API Connection**:
+    *   `USE_MOCK` is currently set to `true` in `src/api/hanoClient.ts`. Switch to `false` when CORS/Backend access is confirmed or for native builds.
 3.  **Deployment**:
-    *   Verify `app.json` configuration (package name, bundle identifier) matches the new branding before store submission.
+    *   Verify `app.json` configuration before store submission.
 
 ## 🛠 Technical Details
-*   **Port**: Server was last running on port `8089`.
-*   **Assets**:
-    *   Icons: `assets/images/icons/` (look for `_final.png` files).
-    *   Logo: `assets/images/tm-logo.png`.
-*   **Data**: `src/constants/Menu.ts` contains the mapping for treatments and icons.
+*   **Port**: `8081` (Expo default).
+*   **Booking Flow**: Located in `app/booking/`.
+*   **API Client**: `src/api/hanoClient.ts`.
+*   **Icons**: Using `Ionicons` dynamically in `booking/index.tsx`.
 
 ## 📝 Git Status
 The repository is initialized and pushed to `https://github.com/adeelanwar85/TMKlinikkenApp.git`.

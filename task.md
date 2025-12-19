@@ -35,3 +35,11 @@
     - [ ] **Remaining Icons**: Generate "V3" style icons for "Lege" and "Bestill time" cards <!-- id: 38 -->
     - [ ] **Mobile Testing**: Verify safe areas and gradients on iOS/Android Simulators <!-- id: 39 -->
     - [ ] **Deployment**: Configure `app.json` bundle IDs and build standalone app <!-- id: 40 -->
+
+- [ ] **Booking Flow & integration (EG Hano)** <!-- id: 41 -->
+    - [x] **API**: Implement `hanoClient` with Mock Data toggle <!-- id: 42 -->
+    - [x] **UI Polish**: Premium Gradient Headers, Custom Cards, Dynamic Icons <!-- id: 43 -->
+        - [x] **Treatment List**: Mapped icons (Smiley, Drop, etc.) <!-- id: 44 -->
+        - [x] **Calendar**: Fixed Web font (Sans-serif) <!-- id: 45 -->
+    - [x] **Flow**: Navigation logic fixed (hiding native headers) <!-- id: 46 -->
+    - [ ] **Notifications**: Implement local notifications (Pending) <!-- id: 47 -->
