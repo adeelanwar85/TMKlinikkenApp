@@ -23,17 +23,13 @@ export default function DashboardScreen() {
         if (tab === 'TM Klinikken') {
             router.push({ pathname: '/webview', params: { url: 'https://www.tmklinikken.no', title: 'TM Klinikken' } });
         } else if (tab === 'Bestill time') {
-            router.push({ pathname: '/webview', params: { url: 'https://tmklinikken.bestille.no/OnCust2/#!/ ', title: 'Bestill time' } });
+            router.push('/booking');
         } else if (tab === 'Priser') {
-            router.push({ pathname: '/webview', params: { url: 'https://www.tmklinikken.no/behandlinger', title: 'Priser' } }); // Assuming prices are listed on treatments page or similar, or main site. Using treatments for now as fallback or maybe main page. Let's use main page specific section if possible, or just tmklinikken.no/priser if it exists? 
-            // Better to use generic tmklinikken.no if unsure, but user asked for "Priser".
-            // Let's guess https://www.tmklinikken.no/priser if it exists, otherwise fallback to main.
-            // Actually, usually it's /priser.
             router.push({ pathname: '/webview', params: { url: 'https://www.tmklinikken.no/priser', title: 'Priser' } });
         } else if (tab === 'Om oss') {
             router.push('/about');
         } else if (tab === 'Kontakt') {
-            router.push('/about'); // Scroll to contact or just open about
+            router.push('/about');
         }
     };
 
@@ -70,21 +66,23 @@ export default function DashboardScreen() {
                 {/* Main Cards Stack */}
                 <View style={styles.cardStack}>
                     {/* Dynamic Service Cards from Scraped Menu */}
-                    {TREATMENT_MENU.filter(item => item.id !== 'bestill' && item.id !== 'priser').map((item) => (
-                        // Filtering out Bestill/Priser from main list if we want them separate, 
-                        // but user said "add menu options for Priser and Bestill time".
-                        // Since I added them to TREATMENT_MENU, they will appear here automatically.
-                        // But maybe we want them as separate 'Quick Actions' instead of large cards?
-                        // For now, let's show them as cards as it is robust.
+                    {TREATMENT_MENU.filter(item => item.id !== 'priser').map((item) => (
                         <ServiceCard
                             key={item.id}
                             title={item.title}
                             subtitle={item.subtitle}
-                            // @ts-ignore
-                            iconName={item.icon}
+                            iconName={item.icon as any}
                             image={item.image}
                             buttonText="Les mer"
-                            onPress={() => router.push({ pathname: '/webview', params: { url: item.url, title: item.title } })}
+                            onPress={() => {
+                                if (item.details) {
+                                    router.push(`/treatment/${item.id}`);
+                                } else if (item.id === 'bestill') {
+                                    router.push('/booking');
+                                } else {
+                                    router.push({ pathname: '/webview', params: { url: item.url, title: item.title } });
+                                }
+                            }}
                         />
                     ))}
 

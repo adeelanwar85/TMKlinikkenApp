@@ -64,7 +64,10 @@ export default function SummaryScreen() {
     }
 
     const handleConfirm = async () => {
+        if (submitting) return;
         setSubmitting(true);
+        console.log('Confirming booking...');
+
         try {
             await createAppointment({
                 departmentId: DEPARTMENT_ID,
@@ -81,16 +84,43 @@ export default function SummaryScreen() {
 
             await scheduleNotification(selectedTimeSlot.Start, selectedTreatment.Name);
 
+            // Web Specific Logic: Bypass Alert, Force Navigation
+            if (Platform.OS === 'web') {
+                // Determine base URL or just root relative
+                // Using timeout to ensure React state doesn't block unmount
+                setTimeout(() => {
+                    window.location.href = '/appointments';
+                }, 100);
+                return;
+            }
+
+            // Native Logic
             Alert.alert(
                 'Tusen takk! ✨',
                 'Din time er bekreftet. Vi gleder oss til å se deg.',
-                [{ text: 'Tilbake til forsiden', onPress: () => router.dismissAll() }]
+                [{
+                    text: 'Tilbake til forsiden',
+                    onPress: () => {
+                        if (router.canDismiss()) {
+                            router.dismissAll();
+                        }
+                        router.replace('/(tabs)/appointments');
+                    }
+                }]
             );
         } catch (error) {
-            console.error(error);
-            Alert.alert('Noe gikk galt', 'Vi fikk ikke registrert timen. Vennligst prøv igjen eller ring oss.');
+            console.error('Booking Error:', error);
+            if (Platform.OS === 'web') {
+                window.alert('Noe gikk galt. Vi fikk ikke registrert timen.');
+            } else {
+                Alert.alert('Noe gikk galt', 'Vi fikk ikke registrert timen. Vennligst prøv igjen.');
+            }
         } finally {
-            setSubmitting(false);
+            // Only reset submitting if we are NOT navigating away on web (which unmounts)
+            // But safe to reset generally.
+            if (Platform.OS !== 'web') {
+                setSubmitting(false);
+            }
         }
     };
 

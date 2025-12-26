@@ -124,6 +124,25 @@ export const createAppointment = async (payload: CreateBookingPayload) => {
     try {
         if (USE_MOCK) {
             await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Find service name
+            const service = mockTreatments.find(t => t.Id === payload.serviceId)?.Name || 'Behandling';
+
+            // Create mock appointment
+            const newAppointment: Appointment = {
+                Id: Math.floor(Math.random() * 10000) + 200, // Random ID
+                Service: service,
+                Start: payload.start,
+                End: new Date(new Date(payload.start).getTime() + 30 * 60000).toISOString(), // Assume 30 min
+                Status: 'Confirmed'
+            };
+
+            // update storage
+            const currentList = await getStoredAppointments();
+            currentList.push(newAppointment);
+            mockAppointments = currentList; // Sync
+            await AsyncStorage.setItem('mockAppointments', JSON.stringify(currentList));
+
             return { Success: true, Message: "Mock Booking Confirmed" };
         }
 
@@ -150,5 +169,60 @@ export const createAppointment = async (payload: CreateBookingPayload) => {
         throw error;
     }
 }
+
+export interface Appointment {
+    Id: number;
+    Service: string;
+    Start: string;
+    End: string;
+    Status: 'Confirmed' | 'Cancelled';
+}
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export let mockAppointments: Appointment[] = [
+    { Id: 101, Service: 'Rynkebehandling', Start: '2025-12-28T10:00:00', End: '2025-12-28T10:30:00', Status: 'Confirmed' },
+    { Id: 102, Service: 'Konsultasjon', Start: '2026-01-05T14:00:00', End: '2026-01-05T14:30:00', Status: 'Confirmed' }
+];
+
+const getStoredAppointments = async (): Promise<Appointment[]> => {
+    try {
+        const stored = await AsyncStorage.getItem('mockAppointments');
+        if (stored) {
+            return JSON.parse(stored);
+        }
+    } catch (e) {
+        console.error("Failed to load mock appointments", e);
+    }
+    return mockAppointments; // Default fallback
+};
+
+export const getUserAppointments = async (): Promise<Appointment[]> => {
+    if (USE_MOCK) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const appointments = await getStoredAppointments();
+        mockAppointments = appointments; // Sync in-memory
+        return appointments.filter(a => a.Status === 'Confirmed');
+    }
+    // Real API implementation would go here (GET /Activity/search or similar)
+    return [];
+};
+
+export const cancelAppointment = async (appointmentId: number): Promise<boolean> => {
+    if (USE_MOCK) {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        const currentList = await getStoredAppointments();
+        const index = currentList.findIndex(a => a.Id === appointmentId);
+        if (index !== -1) {
+            currentList[index].Status = 'Cancelled';
+            mockAppointments = currentList;
+            await AsyncStorage.setItem('mockAppointments', JSON.stringify(currentList));
+            return true;
+        }
+        return false;
+    }
+    // Real API: DELETE /Activity/reservation/{id}
+    return true;
+};
 
 export default hanoClient;

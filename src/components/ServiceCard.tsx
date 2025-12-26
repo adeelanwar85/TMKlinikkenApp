@@ -4,18 +4,19 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Image, ImageSourcePropType, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { LaserIcon } from './icons/LaserIcon';
 
 interface ServiceCardProps {
     title: string;
     subtitle: string;
     image?: ImageSourcePropType;
-    iconName?: keyof typeof Ionicons.glyphMap;
-    buttonText: string;
+    iconName?: keyof typeof Ionicons.glyphMap | 'custom-laser';
+    buttonText?: string;
     onPress?: () => void;
     variant?: 'teal' | 'light';
 }
 
-export const ServiceCard = ({ title, subtitle, image, iconName, buttonText, onPress, variant = 'teal' }: ServiceCardProps) => {
+export const ServiceCard = ({ title, subtitle, image, iconName, buttonText = "Bestill time", onPress, variant = 'teal' }: ServiceCardProps) => {
     const scale = useSharedValue(1);
 
     const animatedStyle = useAnimatedStyle(() => {
@@ -36,9 +37,11 @@ export const ServiceCard = ({ title, subtitle, image, iconName, buttonText, onPr
         <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
             <Animated.View style={[styles.card, variant === 'light' && styles.cardLight, animatedStyle]}>
                 <View style={styles.cardImageContainer}>
-                    {iconName ? (
+                    {iconName === 'custom-laser' ? (
+                        <LaserIcon color={variant === 'teal' ? Colors.neutral.white : Colors.primary.main} />
+                    ) : iconName ? (
                         <Ionicons
-                            name={iconName}
+                            name={iconName as keyof typeof Ionicons.glyphMap}
                             size={48}
                             color={variant === 'teal' ? Colors.neutral.white : Colors.primary.main}
                         />
@@ -65,7 +68,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary.main,
         borderRadius: 24,
         overflow: 'hidden',
-        height: 140, // Slightly more compact
+        height: 140,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
