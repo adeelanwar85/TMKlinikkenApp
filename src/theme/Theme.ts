@@ -22,6 +22,9 @@ export const Colors = {
     error: '#FF6B6B',
     warning: '#FFD93D',
   },
+  accent: {
+    gold: '#FFD700', // Brighter gold for better visibility
+  },
   shadow: 'rgba(0, 0, 0, 0.08)',
 };
 

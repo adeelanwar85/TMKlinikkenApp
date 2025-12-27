@@ -24,6 +24,8 @@ export default function DashboardScreen() {
             router.push({ pathname: '/webview', params: { url: 'https://www.tmklinikken.no', title: 'TM Klinikken' } });
         } else if (tab === 'Bestill time') {
             router.push('/booking');
+        } else if (tab === 'Gavekort') {
+            router.push('/shop/giftcard');
         } else if (tab === 'Priser') {
             router.push({ pathname: '/webview', params: { url: 'https://www.tmklinikken.no/priser', title: 'Priser' } });
         } else if (tab === 'Om oss') {
@@ -51,7 +53,7 @@ export default function DashboardScreen() {
                 {/* Tab Selector */}
                 <View style={styles.tabContainer}>
                     <View style={styles.tabList}>
-                        {['Behandlinger', 'Bestill time', 'Priser', 'Om oss', 'Kontakt'].map((tab) => (
+                        {['Behandlinger', 'Bestill time', 'Gavekort', 'Priser', 'Om oss', 'Kontakt'].map((tab) => (
                             <TouchableOpacity
                                 key={tab}
                                 style={[styles.tabButton, selectedTab === tab && styles.tabButtonActive]}

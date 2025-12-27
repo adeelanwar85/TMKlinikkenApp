@@ -3,12 +3,19 @@ import { Colors, Spacing } from '@/src/theme/Theme';
 import { Body, H2, H3 } from '@/src/theme/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { Linking, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Linking, Platform, ScrollView, StyleSheet, TouchableOpacity, View, LayoutAnimation, UIManager, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+if (Platform.OS === 'android') {
+    if (UIManager.setLayoutAnimationEnabledExperimental) {
+        UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+}
 
 export default function AboutScreen() {
     const router = useRouter();
+    const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
     const handleCall = () => {
         Linking.openURL('tel:+4721423636');
@@ -40,6 +47,15 @@ export default function AboutScreen() {
 
             <ScrollView contentContainerStyle={styles.content}>
 
+                {/* Brand Logo */}
+                <View style={styles.logoContainer}>
+                    <Image
+                        source={require('../assets/images/tm-logo.png')}
+                        style={styles.pageLogo}
+                        resizeMode="contain"
+                    />
+                </View>
+
                 {/* Intro Section */}
                 <View style={styles.section}>
                     <H2 style={styles.heading}>Din klinikk for estetisk medisin</H2>
@@ -53,19 +69,40 @@ export default function AboutScreen() {
                 {/* Team Section */}
                 <H3 style={styles.subHeading}>Vårt Team</H3>
                 {/* @ts-ignore */}
-                {EMPLOYEES.map((employee, index) => (
-                    <View key={index} style={styles.card}>
-                        <View style={styles.doctorHeader}>
-                            <View style={styles.avatarPlaceholder}>
-                                <Ionicons name="person" size={30} color={Colors.primary.main} />
+                {EMPLOYEES.map((employee, index) => {
+                    const isExpanded = expandedIndex === index;
+                    return (
+                        <TouchableOpacity
+                            key={index}
+                            style={[styles.card, isExpanded && styles.cardExpanded]}
+                            activeOpacity={0.9}
+                            onPress={() => {
+                                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                                setExpandedIndex(isExpanded ? null : index);
+                            }}
+                        >
+                            <View style={styles.doctorHeader}>
+                                <Image source={employee.image} style={styles.avatar} />
+                                <View style={styles.doctorInfo}>
+                                    <H3 style={styles.doctorName}>{employee.name}</H3>
+                                    <Body style={styles.doctorTitle}>{employee.title}</Body>
+                                </View>
+                                <Ionicons
+                                    name={isExpanded ? "chevron-up" : "chevron-down"}
+                                    size={24}
+                                    color={Colors.neutral.lightGray}
+                                />
                             </View>
-                            <View style={styles.doctorInfo}>
-                                <H3 style={styles.doctorName}>{employee.name}</H3>
-                                <Body style={styles.doctorTitle}>{employee.title}</Body>
-                            </View>
-                        </View>
-                    </View>
-                ))}
+
+                            {isExpanded && (
+                                <View style={styles.bioContainer}>
+                                    <View style={styles.separator} />
+                                    <Body style={styles.bioText}>{employee.bio}</Body>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    );
+                })}
 
                 {/* Contact Actions */}
                 <H3 style={styles.subHeading}>Kontakt oss</H3>
@@ -134,6 +171,14 @@ const styles = StyleSheet.create({
         padding: Spacing.l,
         paddingBottom: 40,
     },
+    logoContainer: {
+        alignItems: 'center',
+        marginBottom: Spacing.l,
+    },
+    pageLogo: {
+        width: 180,
+        height: 60,
+    },
     section: {
         marginBottom: Spacing.l,
     },
@@ -169,14 +214,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: Spacing.m,
     },
-    avatarPlaceholder: {
+    avatar: {
         width: 60,
         height: 60,
         borderRadius: 30,
-        backgroundColor: Colors.primary.light,
-        justifyContent: 'center',
-        alignItems: 'center',
         marginRight: Spacing.m,
+        backgroundColor: Colors.neutral.lightGray,
     },
     doctorInfo: {
         flex: 1,
@@ -190,11 +233,27 @@ const styles = StyleSheet.create({
         color: Colors.neutral.darkGray,
         opacity: 0.8,
     },
+    cardExpanded: {
+        backgroundColor: '#fff',
+        borderColor: Colors.primary.light,
+        borderWidth: 1,
+    },
+    bioContainer: {
+        marginTop: Spacing.s,
+    },
     bioText: {
         fontSize: 15,
-        lineHeight: 22,
+        lineHeight: 24,
         color: Colors.neutral.charcoal,
+        opacity: 0.9,
     },
+    separator: {
+        height: 1,
+        backgroundColor: Colors.neutral.lightGray,
+        opacity: 0.5,
+        marginVertical: Spacing.m,
+    },
+    // ... Action Button styles remain
     actionButton: {
         flexDirection: 'row',
         alignItems: 'center',

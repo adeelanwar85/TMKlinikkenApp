@@ -9,7 +9,8 @@ import { Colors, Spacing, Shadows } from '../../src/theme/Theme';
 import { H1, H2, Body, Caption } from '../../src/theme/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Notifications from 'expo-notifications';
+// ... imports
+import { NotificationService } from '../../src/services/NotificationService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SummaryScreen() {
@@ -19,38 +20,8 @@ export default function SummaryScreen() {
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        registerForPushNotificationsAsync();
+        NotificationService.registerForPushNotificationsAsync();
     }, []);
-
-    const registerForPushNotificationsAsync = async () => {
-        if (Platform.OS === 'web') return;
-
-        const { status: existingStatus } = await Notifications.getPermissionsAsync();
-        if (existingStatus !== 'granted') {
-            await Notifications.requestPermissionsAsync();
-        }
-    };
-
-    const scheduleNotification = async (dateStr: string, treatmentName: string) => {
-        if (Platform.OS === 'web') return;
-
-        try {
-            const triggerDate = new Date(dateStr);
-            triggerDate.setHours(triggerDate.getHours() - 24);
-
-            if (triggerDate > new Date()) {
-                await Notifications.scheduleNotificationAsync({
-                    content: {
-                        title: "Husk timen din i morgen! ✨",
-                        body: "Du har time til " + treatmentName + " hos TM Klinikken kl. " + new Date(dateStr).toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' }) + ".",
-                    },
-                    trigger: triggerDate,
-                });
-            }
-        } catch (e) {
-            console.log("Notification scheduling failed", e);
-        }
-    };
 
     if (!selectedTreatment || !selectedTimeSlot || !user) {
         return (
@@ -82,32 +53,11 @@ export default function SummaryScreen() {
                 }
             });
 
-            await scheduleNotification(selectedTimeSlot.Start, selectedTreatment.Name);
+            await NotificationService.scheduleAppointmentReminder(new Date(selectedTimeSlot.Start), selectedTreatment.Name);
 
-            // Web Specific Logic: Bypass Alert, Force Navigation
-            if (Platform.OS === 'web') {
-                // Determine base URL or just root relative
-                // Using timeout to ensure React state doesn't block unmount
-                setTimeout(() => {
-                    window.location.href = '/appointments';
-                }, 100);
-                return;
-            }
+            // Navigate to Success Screen
+            router.replace('/booking/success');
 
-            // Native Logic
-            Alert.alert(
-                'Tusen takk! ✨',
-                'Din time er bekreftet. Vi gleder oss til å se deg.',
-                [{
-                    text: 'Tilbake til forsiden',
-                    onPress: () => {
-                        if (router.canDismiss()) {
-                            router.dismissAll();
-                        }
-                        router.replace('/(tabs)/appointments');
-                    }
-                }]
-            );
         } catch (error) {
             console.error('Booking Error:', error);
             if (Platform.OS === 'web') {

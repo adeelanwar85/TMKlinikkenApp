@@ -22,6 +22,8 @@ export default function TabLayout() {
 
                     if (route.name === 'index') {
                         iconName = focused ? 'home' : 'home-outline';
+                    } else if (route.name === 'campaigns') {
+                        iconName = focused ? 'megaphone' : 'megaphone-outline';
                     } else if (route.name === 'appointments') {
                         iconName = focused ? 'calendar' : 'calendar-outline';
                     } else if (route.name === 'shop') {
@@ -37,6 +39,7 @@ export default function TabLayout() {
             })}
         >
             <Tabs.Screen name="index" options={{ title: 'Hjem' }} />
+            <Tabs.Screen name="campaigns" options={{ title: 'Kampanjer' }} />
             <Tabs.Screen name="appointments" options={{ title: 'Mine timer' }} />
             <Tabs.Screen name="shop" options={{ title: 'Butikk' }} />
             <Tabs.Screen name="profile" options={{ title: 'Profil' }} />
