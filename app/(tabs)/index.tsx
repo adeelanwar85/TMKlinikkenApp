@@ -27,7 +27,7 @@ export default function DashboardScreen() {
         } else if (tab === 'Gavekort') {
             router.push('/shop/giftcard');
         } else if (tab === 'Priser') {
-            router.push({ pathname: '/webview', params: { url: 'https://www.tmklinikken.no/priser', title: 'Priser' } });
+            router.push('/prices');
         } else if (tab === 'Om oss') {
             router.push('/about');
         } else if (tab === 'Kontakt') {

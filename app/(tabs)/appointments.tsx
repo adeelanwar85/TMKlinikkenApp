@@ -1,146 +1,101 @@
 import { Button } from '@/src/components/Button';
+import { GradientHeader } from '@/src/components/GradientHeader';
 import { Colors, Spacing } from '@/src/theme/Theme';
-import { Body, H1, H3 } from '@/src/theme/Typography';
-import { useRouter, useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
-import { Alert, FlatList, Image, Platform, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Body, H1, H2, H3 } from '@/src/theme/Typography';
 import { Ionicons } from '@expo/vector-icons';
-import { getUserAppointments, cancelAppointment, Appointment } from '@/src/api/hanoClient';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { FlatList, Image, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+// Mock data for appointments
+const MOCK_APPOINTMENTS = [
+    {
+        Id: 1,
+        Date: '2023-11-15T10:00:00',
+        TreatmentName: 'Rynkebehandling 3 områder',
+        Price: 3500,
+        Status: 'Bekreftet',
+        Duration: '30 min'
+    },
+    {
+        Id: 2,
+        Date: '2023-12-01T14:30:00',
+        TreatmentName: 'Dermapen Full Ansikt',
+        Price: 2200,
+        Status: 'Bekreftet',
+        Duration: '45 min'
+    }
+];
 
 export default function AppointmentsScreen() {
     const router = useRouter();
-    const [appointments, setAppointments] = useState<Appointment[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [appointments, setAppointments] = useState<any[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        loadAppointments();
+    }, []);
 
     const loadAppointments = async () => {
-        setLoading(true);
-        try {
-            const data = await getUserAppointments();
-            setAppointments(data);
-        } catch (error) {
-            console.error(error);
-        } finally {
+        // Simonsulate API call
+        setTimeout(() => {
+            setAppointments(MOCK_APPOINTMENTS);
             setLoading(false);
             setRefreshing(false);
-        }
+        }, 1000);
     };
 
-    useFocusEffect(
-        useCallback(() => {
-            loadAppointments();
-        }, [])
+    const renderItem = ({ item }: { item: any }) => (
+        <View style={styles.appointmentCard}>
+            <View style={styles.cardHeader}>
+                <View style={styles.dateContainer}>
+                    <Ionicons name="calendar-outline" size={16} color={Colors.neutral.charcoal} />
+                    <Body style={styles.dateText}>
+                        {new Date(item.Date).toLocaleDateString('no-NO', { day: 'numeric', month: 'long' })}
+                    </Body>
+                    <View style={styles.timeBadge}>
+                        <Body style={styles.timeText}>
+                            {new Date(item.Date).toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' })}
+                        </Body>
+                    </View>
+                </View>
+                <View style={[styles.statusBadge, { backgroundColor: '#E8F5E9' }]}>
+                    <Body style={[styles.statusText, { color: '#2E7D32' }]}>{item.Status}</Body>
+                </View>
+            </View>
+
+            <View style={styles.treatmentInfo}>
+                <H3 style={styles.treatmentName}>{item.TreatmentName}</H3>
+                <View style={styles.priceRow}>
+                    <Ionicons name="card-outline" size={14} color={Colors.neutral.darkGray} />
+                    <Body style={styles.priceText}>{item.Price},-</Body>
+                    <Body style={[styles.priceText, { marginLeft: 10 }]}>• {item.Duration}</Body>
+                </View>
+            </View>
+
+            <View style={styles.actionRow}>
+                <TouchableOpacity style={styles.cancelButton}>
+                    <Ionicons name="close-circle-outline" size={16} color="#D32F2F" />
+                    <Body style={styles.cancelText}>Avbestill</Body>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.rescheduleButton}>
+                    <Ionicons name="calendar" size={16} color="white" />
+                    <Body style={styles.rescheduleText}>Endre time</Body>
+                </TouchableOpacity>
+            </View>
+        </View>
     );
 
-    const handleReschedule = (id: number) => {
-        Alert.alert(
-            'Flytte time?',
-            'Du vil bli sendt til booking for å finne en ny tid. Den gamle timen slettes først når du bekrefter den nye.',
-            [
-                { text: 'Avbryt', style: 'cancel' },
-                {
-                    text: 'Finn ny tid',
-                    onPress: () => {
-                        // For MVP: Redirect to booking start. 
-                        router.push('/booking');
-                    }
-                }
-            ]
-        );
-    };
-
-    const handleCancel = (id: number) => {
-        if (Platform.OS === 'web') {
-            const confirm = window.confirm('Er du sikker på at du vil avbestille denne timen?');
-            if (confirm) {
-                performCancel(id);
-            }
-        } else {
-            Alert.alert(
-                'Avbestille time?',
-                'Er du sikker på at du vil avbestille denne timen? Dette kan ikke angres.',
-                [
-                    { text: 'Behold time', style: 'cancel' },
-                    {
-                        text: 'Avbestill',
-                        style: 'destructive',
-                        onPress: () => performCancel(id)
-                    }
-                ]
-            );
-        }
-    };
-
-    const performCancel = async (id: number) => {
-        setLoading(true);
-        const success = await cancelAppointment(id);
-        if (success) {
-            // On web, alert might block render updates, wait a tick
-            setTimeout(() => {
-                if (Platform.OS !== 'web') {
-                    Alert.alert('Time avbestilt', 'Timen din er nå kansellert.');
-                }
-                loadAppointments();
-            }, 100);
-        } else {
-            if (Platform.OS !== 'web') {
-                Alert.alert('Feil', 'Kunne ikke avbestille timen.');
-            } else {
-                alert('Kunne ikke avbestille timen.');
-            }
-        }
-        setLoading(false);
-    };
-
-    const renderItem = ({ item }: { item: Appointment }) => {
-        const date = new Date(item.Start).toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' });
-        const time = new Date(item.Start).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
-
-        return (
-            <View style={styles.card}>
-                <View style={styles.cardHeader}>
-                    <View style={styles.dateBox}>
-                        <Body style={styles.dateText}>{date}</Body>
-                    </View>
-                    <View style={styles.statusBadge}>
-                        <Text style={styles.statusText}>Bekreftet</Text>
-                    </View>
-                </View>
-
-                <View style={styles.cardBody}>
-                    <H3 style={styles.serviceName}>{item.Service}</H3>
-                    <View style={styles.row}>
-                        <Ionicons name="time-outline" size={16} color={Colors.neutral.darkGray} />
-                        <Body style={styles.timeText}>Kl. {time}</Body>
-                    </View>
-                    <View style={styles.row}>
-                        <Ionicons name="location-outline" size={16} color={Colors.neutral.darkGray} />
-                        <Body style={styles.timeText}>TM Klinikken</Body>
-                    </View>
-                </View>
-
-                {/* Actions */}
-                <View style={styles.actions}>
-                    <TouchableOpacity style={styles.rescheduleButton} onPress={() => handleReschedule(item.Id)}>
-                        <Text style={styles.rescheduleText}>Flytt time</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.cancelButton} onPress={() => handleCancel(item.Id)}>
-                        <Text style={styles.cancelText}>Avbestill</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        );
-    };
-
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <View style={styles.header}>
-                <H1 style={styles.headerTitle}>Mine timer</H1>
-            </View>
+        <View style={styles.container}>
+            <SafeAreaView edges={['top']} style={styles.header}>
+                <H1 style={styles.pageTitle}>Mine Timer</H1>
+            </SafeAreaView>
 
             <View style={styles.content}>
+
                 {appointments.length > 0 ? (
                     <FlatList
                         data={appointments}
@@ -163,7 +118,7 @@ export default function AppointmentsScreen() {
                     </View>
                 )}
             </View>
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -172,117 +127,138 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors.background.main,
     },
-    header: {
-        paddingHorizontal: Spacing.m,
-        paddingBottom: Spacing.s,
-        backgroundColor: Colors.background.main,
-        borderBottomWidth: 1,
-        borderBottomColor: Colors.neutral.lightGray,
-    },
-    headerTitle: {
-        color: Colors.primary.deep,
-    },
+    // Main content area
     content: {
         flex: 1,
     },
+    // List content styles
     listContent: {
-        padding: Spacing.m,
-        gap: Spacing.m,
+        paddingTop: 20,
+        paddingBottom: 40,
+        paddingHorizontal: Spacing.m,
     },
-    card: {
+    // Appointment Item Styles
+    appointmentCard: {
         backgroundColor: Colors.neutral.white,
-        borderRadius: 12,
+        borderRadius: 16,
+        marginBottom: Spacing.m,
         padding: Spacing.m,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
+        shadowOpacity: 0.1,
         shadowRadius: 8,
-        elevation: 2,
+        elevation: 3,
+        borderLeftWidth: 4,
+        borderLeftColor: Colors.primary.main,
     },
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: Spacing.s,
+        alignItems: 'flex-start',
+        marginBottom: Spacing.m,
     },
-    dateBox: {
+    dateContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
         backgroundColor: '#F5F5F0',
-        paddingHorizontal: 8,
+        paddingHorizontal: Spacing.s,
         paddingVertical: 4,
-        borderRadius: 6,
+        borderRadius: 8,
     },
     dateText: {
         fontSize: 12,
         color: Colors.neutral.charcoal,
         fontWeight: '600',
+        marginLeft: 4,
+    },
+    timeBadge: {
+        backgroundColor: '#E8F5E9',
+        paddingHorizontal: Spacing.s,
+        paddingVertical: 4,
+        borderRadius: 8,
+        marginLeft: Spacing.s,
+    },
+    timeText: {
+        fontSize: 12,
+        color: '#2E7D32',
+        fontWeight: '600',
     },
     statusBadge: {
-        backgroundColor: '#E8F5E9',
-        paddingHorizontal: 8,
+        paddingHorizontal: Spacing.s,
         paddingVertical: 4,
-        borderRadius: 6,
+        borderRadius: 8,
     },
     statusText: {
         fontSize: 10,
-        color: '#2E7D32',
         fontWeight: 'bold',
         textTransform: 'uppercase',
     },
-    cardBody: {
+    treatmentInfo: {
         marginBottom: Spacing.m,
     },
-    serviceName: {
+    treatmentName: {
         fontSize: 18,
+        color: Colors.primary.deep,
+        fontWeight: '600',
         marginBottom: 4,
     },
-    row: {
+    priceRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
-        marginTop: 4,
     },
-    timeText: {
+    priceText: {
         fontSize: 14,
         color: Colors.neutral.darkGray,
+        marginLeft: 4,
     },
-    actions: {
+    actionRow: {
         flexDirection: 'row',
-        gap: Spacing.s,
-        marginTop: Spacing.s,
-    },
-    rescheduleButton: {
-        flex: 1,
-        backgroundColor: Colors.primary.deep,
-        paddingVertical: 10,
-        borderRadius: 8,
-        alignItems: 'center',
-    },
-    rescheduleText: {
-        color: 'white',
-        fontSize: 14,
-        fontWeight: '600',
+        justifyContent: 'flex-end',
+        borderTopWidth: 1,
+        borderTopColor: '#F0F0F0',
+        paddingTop: Spacing.s,
     },
     cancelButton: {
         flex: 1,
-        borderWidth: 1,
-        borderColor: '#EF9A9A',
-        paddingVertical: 10,
-        borderRadius: 8,
+        flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
+        padding: Spacing.s,
     },
     cancelText: {
         color: '#D32F2F',
+        marginLeft: Spacing.s,
         fontSize: 14,
-        fontWeight: '600',
+        fontWeight: '500',
     },
+    rescheduleButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: Spacing.s,
+        backgroundColor: Colors.primary.main,
+        borderRadius: 8,
+        marginLeft: Spacing.m,
+    },
+    rescheduleText: {
+        color: 'white',
+        marginLeft: Spacing.s,
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    // Empty State
     emptyState: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         padding: Spacing.xl,
+        marginTop: 60,
     },
     emptyTitle: {
         fontSize: 20,
         color: Colors.neutral.charcoal,
+        marginTop: Spacing.l,
         marginBottom: Spacing.s,
     },
     emptyText: {
@@ -291,4 +267,16 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         maxWidth: 250,
     },
+    header: {
+        paddingHorizontal: Spacing.m,
+        paddingVertical: Spacing.s,
+        backgroundColor: Colors.background.main,
+    },
+    pageTitle: {
+        fontSize: 28,
+        color: Colors.primary.deep,
+    },
+    // logoContainer: removed
+    // logoCard: removed
+    // logo: removed
 });

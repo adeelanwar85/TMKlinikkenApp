@@ -15,7 +15,7 @@ export default function BookingLayout() {
                         fontFamily: 'PlayfairDisplay-Bold',
                         fontSize: 20,
                     },
-                    headerBackTitleVisible: false,
+                    headerBackTitle: '',
                     contentStyle: { backgroundColor: Colors.background.main },
                     headerShadowVisible: false, // Cleaner look
                 }}

@@ -1,4 +1,5 @@
 import { EMPLOYEES } from '@/src/constants/Employees';
+import { GradientHeader } from '@/src/components/GradientHeader';
 import { Colors, Spacing } from '@/src/theme/Theme';
 import { Body, H2, H3 } from '@/src/theme/Typography';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,28 +37,22 @@ export default function AboutScreen() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color={Colors.primary.dark} />
-                </TouchableOpacity>
-                <H2 style={styles.headerTitle}>Om oss</H2>
-                <View style={{ width: 24 }} />
-            </View>
+        <View style={styles.container}>
+            <SafeAreaView edges={['top']} style={styles.header}>
+                <H2 style={styles.pageTitle}>Om oss</H2>
+            </SafeAreaView>
 
             <ScrollView contentContainerStyle={styles.content}>
 
-                {/* Brand Logo */}
-                <View style={styles.logoContainer}>
-                    <Image
-                        source={require('../assets/images/tm-logo.png')}
-                        style={styles.pageLogo}
-                        resizeMode="contain"
-                    />
-                </View>
-
                 {/* Intro Section */}
                 <View style={styles.section}>
+                    <View style={{ alignItems: 'center', marginBottom: Spacing.l }}>
+                        <Image
+                            source={require('../assets/images/tm-logo.png')}
+                            style={styles.pageLogo}
+                            resizeMode="contain"
+                        />
+                    </View>
                     <H2 style={styles.heading}>Din klinikk for estetisk medisin</H2>
                     <Body style={styles.paragraph}>
                         TM Klinikken ligger i Fredrikstad sentrum. Vi tilbyr et bredt spekter av estetiske behandlinger og medisinske hudprogrammer, utført av sertifisert helsepersonell.
@@ -141,7 +136,7 @@ export default function AboutScreen() {
                 </TouchableOpacity>
 
             </ScrollView>
-        </SafeAreaView >
+        </View>
     );
 }
 
@@ -150,37 +145,28 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors.background.main,
     },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: Spacing.m,
-        paddingVertical: Spacing.m,
-        borderBottomWidth: 1,
-        borderBottomColor: Colors.neutral.lightGray,
-        backgroundColor: Colors.neutral.white,
-    },
-    backButton: {
-        padding: Spacing.s,
-    },
-    headerTitle: {
-        fontSize: 18,
-        color: Colors.primary.dark,
-    },
     content: {
-        padding: Spacing.l,
+        paddingTop: 0,
         paddingBottom: 40,
     },
-    logoContainer: {
-        alignItems: 'center',
-        marginBottom: Spacing.l,
+    header: {
+        paddingHorizontal: Spacing.m,
+        paddingVertical: Spacing.s,
+        backgroundColor: Colors.background.main,
     },
+    pageTitle: {
+        fontSize: 28,
+        color: Colors.primary.deep,
+    },
+    // introContainer: removed
+    // logoCard: removed
     pageLogo: {
-        width: 180,
-        height: 60,
+        width: 140,
+        height: 45,
     },
     section: {
         marginBottom: Spacing.l,
+        paddingHorizontal: Spacing.l,
     },
     heading: {
         fontSize: 22,

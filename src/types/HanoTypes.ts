@@ -14,7 +14,7 @@ export interface Service {
     Description?: string;
     Duration: string; // "00:30:00"
     Price: number;
-    CategoryId?: number; // Might need to infer category/grouping
+    CategoryId?: string | number; // Might need to infer category/grouping
     CategoryName?: string; // If available, or we construct it
 }
 

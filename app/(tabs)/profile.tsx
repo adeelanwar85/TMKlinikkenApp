@@ -1,4 +1,5 @@
 import { useAuth } from '@/src/context/AuthContext';
+import { GradientHeader } from '@/src/components/GradientHeader';
 import { Colors, Spacing } from '@/src/theme/Theme';
 import { Body, H2, H3 } from '@/src/theme/Typography';
 import { Ionicons } from '@expo/vector-icons';
@@ -67,17 +68,20 @@ export default function ProfileScreen() {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.container}>
+            <SafeAreaView edges={['top']} style={styles.header}>
+                <H2 style={styles.pageTitle}>Min Side</H2>
+            </SafeAreaView>
+
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
                 {/* User Header */}
-                <View style={styles.header}>
+                <View style={styles.userHeader}>
                     <View style={styles.avatar}>
                         <H2 style={styles.avatarText}>{getInitials(user?.name)}</H2>
                     </View>
                     <H2 style={styles.name}>{user?.name || 'Ola Nordmann'}</H2>
                     <Body style={styles.idText}>Fødselsdato: {user?.birthdate || '12.03.1985'}</Body>
-                    <Body style={styles.idText}>{user?.phone}</Body>
                 </View>
 
                 {/* Min Helse Section */}
@@ -133,7 +137,7 @@ export default function ProfileScreen() {
                 <Body style={styles.versionText}>Versjon 1.0.0</Body>
 
             </ScrollView>
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -216,10 +220,20 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: Spacing.m,
         paddingBottom: 40,
+        paddingTop: 0,
     },
     header: {
+        paddingHorizontal: Spacing.m,
+        paddingVertical: Spacing.s,
+        backgroundColor: Colors.background.main,
+    },
+    pageTitle: {
+        fontSize: 28,
+        color: Colors.primary.deep,
+    },
+    userHeader: {
         alignItems: 'center',
-        marginBottom: Spacing.xl,
+        marginBottom: Spacing.l,
         marginTop: Spacing.m,
     },
     avatar: {

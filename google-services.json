@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "676907748776",
+    "project_id": "tmklinikkenapp",
+    "storage_bucket": "tmklinikkenapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:676907748776:android:28d61075d28de054c2e19d",
+        "android_client_info": {
+          "package_name": "no.tmklinikken.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdFAdYxOdDlKfNqHz7wBIrTl3vuEdNnGI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
