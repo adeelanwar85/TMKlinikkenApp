@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useBooking } from '../../src/context/BookingContext';
-import { getTreatments } from '../../src/api/hanoClient';
-import { Service } from '../../src/types/HanoTypes';
-import { Colors, Spacing, Typography, Shadows } from '../../src/theme/Theme';
-import { H1, H2, Body, Caption } from '../../src/theme/Typography';
+import { useBooking } from '@/src/context/BookingContext';
+import { HanoService } from '@/src/services/HanoService';
+import { Service } from '@/src/types/HanoTypes';
+import { Colors, Spacing, Typography, Shadows } from '@/src/theme/Theme';
+import { H1, H2, Body, Caption } from '@/src/theme/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,7 +24,7 @@ export default function SelectTreatmentScreen() {
     const loadTreatments = async () => {
         try {
             setLoading(true);
-            const data = await getTreatments();
+            const data = await HanoService.getTreatments();
             setTreatments(data);
         } catch (err) {
             setError('Kunne ikke laste behandlinger. Prøv igjen senere.');

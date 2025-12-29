@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
-import { useBooking } from '../../src/context/BookingContext';
-import { getAvailableSlots } from '../../src/api/hanoClient';
-import { AvailableSlot } from '../../src/types/HanoTypes';
-import { Colors, Spacing, Typography, Shadows } from '../../src/theme/Theme';
-import { H1, H2, Body, Caption } from '../../src/theme/Typography';
+import { useBooking } from '@/src/context/BookingContext';
+import { HanoService } from '@/src/services/HanoService';
+import { AvailableSlot } from '@/src/types/HanoTypes';
+import { Colors, Spacing, Typography, Shadows } from '@/src/theme/Theme';
+import { H1, H2, Body, Caption } from '@/src/theme/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -50,7 +50,7 @@ export default function SelectDateScreen() {
             setError(null);
             setSlots([]);
 
-            const data = await getAvailableSlots(selectedTreatment.Id, dateStr);
+            const data = await HanoService.getAvailableSlots(selectedTreatment.Id, dateStr);
             setSlots(data);
 
         } catch (err) {

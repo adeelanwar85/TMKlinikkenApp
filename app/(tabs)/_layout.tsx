@@ -50,6 +50,35 @@ export default function TabLayout() {
                     title: 'Prisliste',
                 }}
             />
+            <Tabs.Screen
+                name="about"
+                options={{
+                    href: null,
+                    title: 'Om oss',
+                }}
+            />
+            <Tabs.Screen
+                name="contact"
+                options={{
+                    href: null,
+                    title: 'Kontakt',
+                }}
+            />
+            <Tabs.Screen
+                name="booking"
+                options={{
+                    href: null,
+                    headerShown: false,
+                    tabBarStyle: { display: 'flex' }
+                }}
+            />
+            <Tabs.Screen
+                name="giftcard"
+                options={{
+                    href: null,
+                    title: 'Gavekort',
+                }}
+            />
         </Tabs>
     );
 }

@@ -2,15 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, Platform, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useBooking } from '../../src/context/BookingContext';
-import { useAuth } from '../../src/context/AuthContext';
-import { createAppointment, DEPARTMENT_ID } from '../../src/api/hanoClient';
-import { Colors, Spacing, Shadows } from '../../src/theme/Theme';
-import { H1, H2, Body, Caption } from '../../src/theme/Typography';
+import { useBooking } from '@/src/context/BookingContext';
+import { useAuth } from '@/src/context/AuthContext';
+import { HanoService, DEPARTMENT_ID } from '@/src/services/HanoService';
+import { Colors, Spacing, Shadows } from '@/src/theme/Theme';
+import { H1, H2, Body, Caption } from '@/src/theme/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 // ... imports
-import { NotificationService } from '../../src/services/NotificationService';
+import { NotificationService } from '@/src/services/NotificationService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SummaryScreen() {
@@ -40,7 +40,7 @@ export default function SummaryScreen() {
         console.log('Confirming booking...');
 
         try {
-            await createAppointment({
+            await HanoService.createAppointment({
                 departmentId: DEPARTMENT_ID,
                 serviceId: selectedTreatment.Id,
                 start: selectedTimeSlot.Start,

@@ -5,21 +5,41 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing } from '@/src/theme/Theme';
 import { H2, H3, Body } from '@/src/theme/Typography';
+import { ContentService } from '@/src/services/ContentService';
+import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ContactScreen() {
     const router = useRouter();
+    const [config, setConfig] = React.useState<any>(null);
+
+    useFocusEffect(
+        React.useCallback(() => {
+            loadConfig();
+        }, [])
+    );
+
+    const loadConfig = async () => {
+        const data = await ContentService.getAppConfig();
+        setConfig(data);
+    };
+
+    const contact = config?.contactInfo || {
+        phone: '21 42 36 36',
+        email: 'post@tmklinikken.no',
+        address: 'Nygaardsgata 36, 1607 Fredrikstad'
+    };
 
     const handleCall = () => {
-        Linking.openURL('tel:+4721423636');
+        Linking.openURL(`tel:${contact.phone.replace(/\s/g, '')}`);
     };
 
     const handleEmail = () => {
-        Linking.openURL('mailto:post@tmklinikken.no');
+        Linking.openURL(`mailto:${contact.email}`);
     };
 
     const handleMap = () => {
-        const address = 'Nygaardsgata 36, 1607 Fredrikstad';
+        const address = contact.address;
         const url = Platform.select({
             ios: `maps:0,0?q=${address}`,
             android: `geo:0,0?q=${address}`,
@@ -37,6 +57,7 @@ export default function ContactScreen() {
             <SafeAreaView edges={['top']} style={styles.safeArea}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                        {/* Use close icon if modal, or arrow if stack. Arrow is fine. */}
                         <Ionicons name="arrow-back" size={24} color={Colors.primary.deep} />
                     </TouchableOpacity>
                     <H2 style={styles.pageTitle}>Kontakt oss</H2>
@@ -69,7 +90,7 @@ export default function ContactScreen() {
                     </View>
                     <View>
                         <Body style={styles.actionLabel}>Ring oss</Body>
-                        <H3 style={styles.actionValue}>21 42 36 36</H3>
+                        <H3 style={styles.actionValue}>{contact.phone}</H3>
                     </View>
                     <Ionicons name="chevron-forward" size={20} color={Colors.neutral.lightGray} style={styles.chevron} />
                 </TouchableOpacity>
@@ -80,7 +101,7 @@ export default function ContactScreen() {
                     </View>
                     <View>
                         <Body style={styles.actionLabel}>Send e-post</Body>
-                        <H3 style={styles.actionValue}>post@tmklinikken.no</H3>
+                        <H3 style={styles.actionValue}>{contact.email}</H3>
                     </View>
                     <Ionicons name="chevron-forward" size={20} color={Colors.neutral.lightGray} style={styles.chevron} />
                 </TouchableOpacity>
@@ -92,7 +113,7 @@ export default function ContactScreen() {
                     </View>
                     <View>
                         <Body style={styles.actionLabel}>Adresse</Body>
-                        <H3 style={styles.actionValue}>Nygaardsgata 36, Fredrikstad</H3>
+                        <H3 style={styles.actionValue}>{contact.address}</H3>
                     </View>
                     <Ionicons name="chevron-forward" size={20} color={Colors.neutral.lightGray} style={styles.chevron} />
                 </TouchableOpacity>
@@ -115,45 +136,70 @@ export default function ContactScreen() {
                 <H3 style={styles.sectionTitle}>Åpningstider</H3>
                 <View style={styles.openingHoursContainerCentered}>
                     <View style={styles.cardNarrow}>
-                        <View style={styles.hourRow}>
-                            <Body style={styles.dayText}>Mandag</Body>
-                            <Body style={styles.timeText}>10:00 – 16:00</Body>
-                        </View>
-                        <View style={styles.separator} />
-                        <View style={styles.hourRow}>
-                            <Body style={styles.dayText}>Tirsdag</Body>
-                            <Body style={styles.timeText}>10:00 – 16:00</Body>
-                        </View>
-                        <View style={styles.separator} />
-                        <View style={styles.hourRow}>
-                            <Body style={styles.dayText}>Onsdag</Body>
-                            <Body style={styles.timeText}>10:00 – 16:00</Body>
-                        </View>
-                        <View style={styles.separator} />
-                        <View style={styles.hourRow}>
-                            <Body style={styles.dayText}>Torsdag</Body>
-                            <Body style={styles.timeText}>10:00 – 20:00</Body>
-                        </View>
-                        <View style={styles.separator} />
-                        <View style={styles.hourRow}>
-                            <Body style={styles.dayText}>Fredag</Body>
-                            <Body style={styles.timeText}>10:00 – 16:00</Body>
-                        </View>
-                        <View style={styles.separator} />
-                        <View style={styles.hourRow}>
-                            <Body style={styles.dayText}>Lørdag</Body>
-                            <Body style={styles.timeText}>11:00 – 15:00</Body>
-                        </View>
-                        <View style={styles.separator} />
-                        <View style={styles.hourRow}>
-                            <Body style={styles.dayText}>Søndag</Body>
-                            <Body style={styles.timeText}>Stengt</Body>
-                        </View>
+                        {(() => {
+                            const hours = config?.openingHours;
+                            let rows: { day: string, time: string }[] = [];
+                            let notes: string[] = [];
 
-                        <View style={[styles.separator, { marginTop: Spacing.l }]} />
-                        <Body style={styles.noteText}>
-                            (Behandlinger på kveldstid etter avtale)
-                        </Body>
+                            if (typeof hours === 'string') {
+                                const lines = hours.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+                                lines.forEach((line: string) => {
+                                    // Heuristic: if line has a colon and is relatively short, it's a time row
+                                    if (line.includes(':') && line.length < 50 && !line.startsWith('(')) {
+                                        const firstColon = line.indexOf(':');
+                                        const day = line.substring(0, firstColon).trim();
+                                        const time = line.substring(firstColon + 1).trim();
+                                        rows.push({ day, time });
+                                    } else {
+                                        notes.push(line); // It's a note line
+                                    }
+                                });
+                            } else if (typeof hours === 'object' && hours !== null) {
+                                // Legacy object (fallback)
+                                const dayMap: { [key: string]: string } = {
+                                    monday: 'Mandag', tuesday: 'Tirsdag', wednesday: 'Onsdag', thursday: 'Torsdag', friday: 'Fredag', saturday: 'Lørdag', sunday: 'Søndag'
+                                };
+                                Object.keys(dayMap).forEach((key) => {
+                                    if (hours[key] && hours[key] !== 'Stengt') {
+                                        rows.push({ day: dayMap[key], time: hours[key] });
+                                    }
+                                });
+                                notes.push('(Behandlinger på kveldstid etter avtale)');
+                            } else {
+                                // Default static
+                                rows = [
+                                    { day: 'Mandag - Fredag', time: '10:00 – 16:00' },
+                                    { day: 'Torsdag', time: '10:00 – 20:00' },
+                                    { day: 'Lørdag', time: '11:00 – 15:00' }
+                                ];
+                                notes.push('(Behandlinger på kveldstid etter avtale)');
+                            }
+
+                            return (
+                                <View>
+                                    {rows.map((row, i) => (
+                                        <React.Fragment key={i}>
+                                            <View style={styles.hourRow}>
+                                                <Body style={styles.dayText}>{row.day}</Body>
+                                                <Body style={styles.timeText}>{row.time}</Body>
+                                            </View>
+                                            {i < rows.length - 1 && <View style={[styles.separator, { marginVertical: 8 }]} />}
+                                        </React.Fragment>
+                                    ))}
+
+                                    {notes.length > 0 && (
+                                        <>
+                                            <View style={[styles.separator, { marginTop: Spacing.l }]} />
+                                            {notes.map((note, i) => (
+                                                <Body key={i} style={styles.noteText}>{note}</Body>
+                                            ))}
+                                        </>
+                                    )}
+                                </View>
+                            );
+                        })()}
+
+
                     </View>
                 </View>
 
@@ -176,7 +222,7 @@ export default function ContactScreen() {
                     </View>
                     <View>
                         <H3 style={styles.actionValue}>Dr. Adeel Anwar</H3>
-                        <Body style={styles.actionLabel}>post@tmklinikken.no</Body>
+                        <Body style={styles.actionLabel}>{contact.email}</Body>
                     </View>
                 </View>
 

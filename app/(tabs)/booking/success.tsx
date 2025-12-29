@@ -3,10 +3,10 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Platform, Image
 import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Spacing } from '../../src/theme/Theme';
-import { H1, Body } from '../../src/theme/Typography';
-import { useBooking } from '../../src/context/BookingContext';
-import { CalendarService } from '../../src/services/CalendarService';
+import { Colors, Spacing } from '@/src/theme/Theme';
+import { H1, Body } from '@/src/theme/Typography';
+import { useBooking } from '@/src/context/BookingContext';
+import { CalendarService } from '@/src/services/CalendarService';
 
 export default function SuccessScreen() {
     const router = useRouter();
@@ -73,7 +73,7 @@ export default function SuccessScreen() {
             <View style={styles.content}>
                 {/* Logo */}
                 <Image
-                    source={require('../../assets/images/tm-logo.png')}
+                    source={require('@/assets/images/tm-logo.png')}
                     style={styles.logo}
                     resizeMode="contain"
                 />

@@ -4,6 +4,8 @@ export interface PriceItem {
     price: string;
     description?: string;
     fromPrice?: boolean;
+    id?: number; // Added for booking linkage
+    duration?: number; // Added for booking linkage
 }
 
 export interface PriceCategory {

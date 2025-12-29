@@ -1,16 +1,36 @@
-import { CAMPAIGNS } from '@/src/constants/Campaigns';
+import { CAMPAIGNS, Campaign } from '@/src/constants/Campaigns';
+import { CAMPAIGN_IMAGES } from '@/src/constants/LocalImageMap';
 import { GradientHeader } from '@/src/components/GradientHeader';
 import { Colors, Spacing } from '@/src/theme/Theme';
 import { Body, H1, H2, H3 } from '@/src/theme/Typography';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect } from 'react';
-import { FlatList, Image, Platform, StyleSheet, TouchableOpacity, View, Alert, Modal } from 'react-native';
+import React, { useEffect, useCallback } from 'react';
+import { FlatList, Image, Platform, StyleSheet, TouchableOpacity, View, Alert, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
+import { ContentService } from '@/src/services/ContentService';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function CampaignsScreen() {
     const [modalVisible, setModalVisible] = React.useState(false);
     const [notifications, setNotifications] = React.useState<any[]>([]);
+    const [campaigns, setCampaigns] = React.useState<Campaign[]>([]);
+    const [loading, setLoading] = React.useState(true);
+
+    // Fetch campaigns when screen comes into focus (to update after admin edits)
+    useFocusEffect(
+        useCallback(() => {
+            loadCampaigns();
+        }, [])
+    );
+
+    const loadCampaigns = async () => {
+        const data = await ContentService.getAllCampaigns();
+        // Filter out inactive ones for the public app
+        const active = data.filter(c => c.active);
+        setCampaigns(active);
+        setLoading(false);
+    };
 
     useEffect(() => {
         registerForNewsUpdates();
@@ -32,24 +52,32 @@ export default function CampaignsScreen() {
         setModalVisible(true);
     };
 
-    const renderItem = ({ item }: { item: typeof CAMPAIGNS[0] }) => (
-        <TouchableOpacity style={styles.card} activeOpacity={0.9}>
-            <Image source={item.imageUrl} style={styles.cardImage} resizeMode="cover" />
-            <View style={styles.cardContent}>
-                <View style={styles.cardHeader}>
-                    <H3 style={styles.cardTitle}>{item.title}</H3>
+    // ...
+    const renderItem = ({ item }: { item: Campaign }) => {
+        const localImage = CAMPAIGN_IMAGES[item.id];
+        const imageSource = (item.imageUrl && typeof item.imageUrl === 'string')
+            ? { uri: item.imageUrl }
+            : (localImage || require('@/assets/images/tm-logo.png'));
+
+        return (
+            <TouchableOpacity style={styles.card} activeOpacity={0.9}>
+                <Image source={imageSource} style={styles.cardImage} resizeMode="cover" />
+                <View style={styles.cardContent}>
+                    <View style={styles.cardHeader}>
+                        <H3 style={styles.cardTitle}>{item.title}</H3>
+                    </View>
+                    <Body style={styles.dateText}>{item.date}</Body>
+                    <Body style={styles.description} numberOfLines={3}>
+                        {item.description}
+                    </Body>
+                    <View style={styles.readMore}>
+                        <Body style={styles.readMoreText}>Les mer</Body>
+                        <Ionicons name="arrow-forward" size={16} color={Colors.primary.main} />
+                    </View>
                 </View>
-                <Body style={styles.dateText}>{item.date}</Body>
-                <Body style={styles.description} numberOfLines={3}>
-                    {item.description}
-                </Body>
-                <View style={styles.readMore}>
-                    <Body style={styles.readMoreText}>Les mer</Body>
-                    <Ionicons name="arrow-forward" size={16} color={Colors.primary.main} />
-                </View>
-            </View>
-        </TouchableOpacity>
-    );
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <View style={styles.container}>
@@ -61,13 +89,24 @@ export default function CampaignsScreen() {
             </SafeAreaView>
 
             {/* Content */}
-            <FlatList
-                data={CAMPAIGNS}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-            />
+            {loading ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color={Colors.primary.deep} />
+                </View>
+            ) : (
+                <FlatList
+                    data={campaigns}
+                    renderItem={renderItem}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={styles.listContent}
+                    showsVerticalScrollIndicator={false}
+                    ListEmptyComponent={
+                        <View style={{ padding: Spacing.xl, alignItems: 'center' }}>
+                            <Body style={{ color: Colors.neutral.darkGray }}>Ingen aktive kampanjer for øyeblikket.</Body>
+                        </View>
+                    }
+                />
+            )}
 
             {/* Notification Inbox Modal */}
             <Modal

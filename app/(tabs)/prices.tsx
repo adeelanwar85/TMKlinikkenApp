@@ -16,10 +16,11 @@ import {
     ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { PRICES, PriceCategory } from '@/src/constants/Prices';
+import { PRICES, PriceCategory, PriceItem } from '@/src/constants/Prices';
 import { useRouter } from 'expo-router';
 import { LaserIcon } from '@/src/components/icons/LaserIcon';
 import { useTreatments } from '@/src/hooks/useTreatments';
+import { useBooking } from '@/src/context/BookingContext';
 
 if (Platform.OS === 'android') {
     if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -30,6 +31,7 @@ if (Platform.OS === 'android') {
 export default function PricesScreen() {
     const router = useRouter();
     const { treatments, loading, refresh } = useTreatments();
+    const { setTreatment } = useBooking(); // Hook call is fine here
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
@@ -47,7 +49,26 @@ export default function PricesScreen() {
     };
 
     const handleBack = () => router.back();
-    const handleBook = () => router.push('/booking');
+
+    const handleBook = (item: PriceItem) => {
+        if (item.id) {
+            // Map PriceItem to Service (HanoType)
+            // Note: Duration might be number or string depending on API. 
+            // HanoService now maps it. We cast safely.
+            setTreatment({
+                Id: item.id,
+                Name: item.name,
+                Price: parseInt(item.price.replace(/\D/g, '')) || 0,
+                Duration: item.duration?.toString() || '00:30:00', // Default if missing
+                Description: item.description
+            });
+            // Go straight to date selection since we picked a treatment
+            router.push('/booking/date-select');
+        } else {
+            // Fallback for manual items or missing IDs
+            router.push('/booking');
+        }
+    };
 
     const filterPrices = (overrideQuery?: string) => {
         // Use live treatments instead of static PRICES
@@ -163,7 +184,7 @@ export default function PricesScreen() {
                                     <TouchableOpacity
                                         key={itemIndex}
                                         style={styles.priceItem}
-                                        onPress={handleBook}
+                                        onPress={() => handleBook(item)}
                                         activeOpacity={0.7}
                                     >
                                         <View style={styles.priceItemContent}>

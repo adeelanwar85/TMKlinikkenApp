@@ -15,56 +15,60 @@ export default function ProfileScreen() {
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [faceIdEnabled, setFaceIdEnabled] = useState(false);
     const [tapCount, setTapCount] = useState(0);
+    const tapRef = React.useRef(0);
 
     const handleVersionTap = () => {
-        setTapCount(prev => {
-            const newCount = prev + 1;
-            console.log("Tap count:", newCount);
+        tapRef.current += 1;
+        setTapCount(tapRef.current);
 
-            if (newCount >= 5) {
-                // Reset sync
-                setTimeout(() => setTapCount(0), 100);
+        if (tapRef.current >= 5) {
+            // Reset
+            tapRef.current = 0;
+            // Delay visual reset slightly so user sees the 5th tap? Not strict.
+            setTapCount(0);
 
-                if (Platform.OS === 'web') {
-                    // Web specific prompt
+            if (Platform.OS === 'web') {
+                // Web specific logic - keep strictly synchronous for window.open
+                // Using a small timeout can actually HELP some web UI interactions clear, 
+                // but for window.open it's risky. Let's try direct first.
+                // Note: window.prompt blocks the thread.
+                setTimeout(() => {
                     const password = window.prompt("Admin Tilgang - Passord:");
                     if (password === "1234") {
-                        router.push('/admin');
+                        window.open('/admin', '_blank');
                     } else if (password !== null) {
                         alert("Feil passord");
                     }
-                }
-                else if (Platform.OS === 'ios') {
-                    Alert.prompt(
-                        "Admin Tilgang",
-                        "Skriv inn passord",
-                        [
-                            { text: "Avbryt", style: "cancel" },
-                            {
-                                text: "Logg inn",
-                                onPress: (item) => {
-                                    if (item === "1234") router.push('/admin');
-                                    else Alert.alert("Feil passord");
-                                }
-                            }
-                        ],
-                        "secure-text"
-                    );
-                } else {
-                    // Android Fallback
-                    Alert.alert(
-                        "Admin Tilgang",
-                        "Hemmelig admin-meny. Skriv kode (1234).",
-                        [
-                            { text: "Avbryt", style: "cancel" },
-                            { text: "Åpne (Dev)", onPress: () => router.push('/admin') }
-                        ]
-                    );
-                }
-                return 0;
+                }, 50);
             }
-            return newCount;
-        });
+            else if (Platform.OS === 'ios') {
+                Alert.prompt(
+                    "Admin Tilgang",
+                    "Skriv inn passord",
+                    [
+                        { text: "Avbryt", style: "cancel" },
+                        {
+                            text: "Logg inn",
+                            onPress: (item: string | undefined) => {
+                                if (item === "1234") router.push('/admin');
+                                else Alert.alert("Feil passord");
+                            }
+                        }
+                    ],
+                    "secure-text"
+                );
+            } else {
+                // Android Fallback
+                Alert.alert(
+                    "Admin Tilgang",
+                    "Hemmelig admin-meny. Skriv kode (1234).",
+                    [
+                        { text: "Avbryt", style: "cancel" },
+                        { text: "Åpne (Dev)", onPress: () => router.push('/admin') }
+                    ]
+                );
+            }
+        }
     };
 
     useEffect(() => {

@@ -1,52 +1,26 @@
-# TM Klinikken App - Progress Handoff
-**Date:** December 19, 2025
-**Last Agent:** Antigravity
+# Progressive Handoff & Context
 
-## 🚀 Current State
-The application now features a **fully polished Booking Flow** integrated with the main "TM Klinikken" design language.
+**Date:** 29.12.2025
+**Project:** TM Klinikken App (React Native / Expo)
+**Last Action:** Implemented Real Booking Flow & Linked Prices.
 
-### ✅ Completed Tasks (Session: Dec 19)
-1.  **Booking Flow UI (Premium Polish)**:
-    *   **Treatment List**:
-        *   Implemented `LinearGradient` header ("Velg Behandling").
-        *   **Dynamic Icons**: Implemented logic to map treatments to specific visual icons:
-            *   *Rynkebehandling* -> ✨ Sparkles (Requests for Smiley were tested but reverted to Sparkles/Default as per user preference discussion). *Wait, user actually said "Det ser ikke bra ut med smilefjes... stjernene du hadde"*. Correct.
-            *   *Filler* -> 💧 Water Drop.
-            *   *Laser* -> ⚡️ Flash.
-            *   *Hud* -> 🌹 Rose.
-    *   **Date Selection**:
-        *   Fixed **Font Issue on Web**: Calendar now correctly uses `sans-serif` (System) instead of falling back to Times New Roman.
-        *   Applied Premium Gradient header ("Velg Tid").
-    *   **Booking Summary**:
-        *   Confirmed Premium card design and layout.
+## 🚨 Critical Context
+1.  **Live Data Active**: `USE_MOCK` is set to `false` in `HanoService.ts`. The app requires valid API credentials in `.env` to function.
+2.  **Booking Flow**:
+    *   Price List (`prices.tsx`) acts as the primary entry point for booking specific treatments.
+    *   `BookingContext` holds the state.
+    *   `Id` and `Duration` are crucial for the mapping to work.
 
-2.  **API / Data**:
-    *   **Mock Data**: Expanded `mockTreatments` to 7 items covering various categories (Laser, Hud, Kropp) for better UI testing.
-    *   **Type Safety**: Fixed `Service` interface mismatches (number vs string) in `hanoClient`.
+## 🏗️ Architecture Status
+*   **Service Layer**: `HanoService.ts` is the single source of truth.
+*   **UI Integration**: `PricesScreen` is now tightly coupled with `BookingContext` to drive the flow.
 
-### ✅ Previously Completed
-1.  **Branding & Logo**:
-    *   Implemented new wide logo asset (1024x235px).
-    *   **Icons**: Custom "Series V3" icon set for main dashboard.
+## 📝 Next Session Checklist
+1.  **Verify Calendar**: Check that `date-select.tsx` correctly displays slots for the *specific* treatment ID passed from the price list.
+2.  **User Details**: Verify `summary.tsx` captures user details correctly before submitting to Hano.
+3.  **Error Handling**: Test what happens if Hano returns an error (e.g. invalid API key) - does the app degrade gracefully?
 
-2.  **Navigation**:
-    *   Tabs: "Shop", "Om oss", "Kontakt".
-    *   Routing: Fixed broken links.
-
-### 🚧 Pending / Next Steps
-1.  **Notifications**:
-    *   `expo-notifications` is installed but logic for scheduling reminders (24h before) needs to be implemented.
-2.  **Real API Connection**:
-    *   `USE_MOCK` is currently set to `true` in `src/api/hanoClient.ts`. Switch to `false` when CORS/Backend access is confirmed or for native builds.
-3.  **Deployment**:
-    *   Verify `app.json` configuration before store submission.
-
-## 🛠 Technical Details
-*   **Port**: `8081` (Expo default).
-*   **Booking Flow**: Located in `app/booking/`.
-*   **API Client**: `src/api/hanoClient.ts`.
-*   **Icons**: Using `Ionicons` dynamically in `booking/index.tsx`.
-
-## 📝 Git Status
-The repository is initialized and pushed to `https://github.com/adeelanwar85/TMKlinikkenApp.git`.
-**Branch:** `main`
+## 📂 Key Files
+*   `src/services/HanoService.ts`
+*   `app/(tabs)/prices.tsx`
+*   `src/context/BookingContext.tsx`

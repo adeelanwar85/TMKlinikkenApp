@@ -1,50 +1,19 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '@/src/theme/Theme';
 import { H2, H3, Body } from '@/src/theme/Typography';
-import { PRICES } from '@/src/constants/Prices';
-import { ContentService } from '@/src/services/ContentService';
+
 
 export default function AdminScreen() {
     const router = useRouter();
-    const [loading, setLoading] = useState(false);
+
 
     const handleBack = () => router.back();
 
-    const handleSeedData = async () => {
-        Alert.alert(
-            "Last opp data?",
-            "Dette vil overskrive data i skyen med de lokale prislistene (Prices.ts). Er du sikker?",
-            [
-                { text: "Avbryt", style: "cancel" },
-                {
-                    text: "Last opp",
-                    onPress: async () => {
-                        setLoading(true);
-                        try {
-                            // Prepare data: Convert image require numbers to null or strings if needed
-                            // For Firestore, we can't store 'require(...)' numbers directly easily if we expect URLs.
-                            // For now, let's strip the image/icon field or handle it carefully.
-                            const cleanData = PRICES.map(cat => {
-                                const { image, ...rest } = cat;
-                                return { ...rest, image: null }; // Uploading images is a separate task (Storage)
-                            });
 
-                            await ContentService.seedInitialData(cleanData);
-                            Alert.alert("Suksess", "Prislisten er lastet opp til skyen! ☁️");
-                        } catch (error) {
-                            Alert.alert("Feil", "Kunne ikke laste opp data: " + error);
-                        } finally {
-                            setLoading(false);
-                        }
-                    }
-                }
-            ]
-        );
-    };
 
     return (
         <View style={styles.container}>
@@ -67,59 +36,74 @@ export default function AdminScreen() {
                 </View>
 
                 {/* Dashboard Options */}
-                <H3 style={styles.sectionTitle}>Innhold</H3>
+                <H3 style={styles.sectionTitle}>Innhold & Struktur</H3>
 
-                <TouchableOpacity style={styles.card} onPress={() => { }} activeOpacity={0.8}>
+                <TouchableOpacity style={styles.card} onPress={() => router.push('/admin/content-editor')} activeOpacity={0.8}>
                     <View style={[styles.iconBox, { backgroundColor: '#E3F2FD' }]}>
-                        <Ionicons name="pricetags" size={24} color="#1565C0" />
+                        <Ionicons name="document-text" size={24} color="#1565C0" />
                     </View>
                     <View style={styles.cardContent}>
-                        <H3 style={styles.cardTitle}>Behandlinger & Priser</H3>
-                        <Body style={styles.cardSubtitle}>Rediger prislisten</Body>
+                        <H3 style={styles.cardTitle}>Behandlingssider (CMS)</H3>
+                        <Body style={styles.cardSubtitle}>Rediger tekst, bilder og innhold</Body>
                     </View>
                     <Ionicons name="chevron-forward" size={20} color={Colors.neutral.lightGray} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.card} onPress={() => { }} activeOpacity={0.8}>
-                    <View style={[styles.iconBox, { backgroundColor: '#FFF3E0' }]}>
-                        <Ionicons name="time" size={24} color="#E65100" />
+                <TouchableOpacity style={styles.card} onPress={() => router.push('/admin/campaigns')} activeOpacity={0.8}>
+                    <View style={[styles.iconBox, { backgroundColor: '#F3E5F5' }]}>
+                        <Ionicons name="megaphone" size={24} color="#7B1FA2" />
                     </View>
                     <View style={styles.cardContent}>
-                        <H3 style={styles.cardTitle}>Åpningstider</H3>
-                        <Body style={styles.cardSubtitle}>Endre åpningstider</Body>
+                        <H3 style={styles.cardTitle}>Kampanjer</H3>
+                        <Body style={styles.cardSubtitle}>Administrer tilbud og nyheter</Body>
                     </View>
                     <Ionicons name="chevron-forward" size={20} color={Colors.neutral.lightGray} />
                 </TouchableOpacity>
 
-                <H3 style={styles.sectionTitle}>Kommunikasjon</H3>
+                <TouchableOpacity style={styles.card} onPress={() => router.push('/admin/employees')} activeOpacity={0.8}>
+                    <View style={[styles.iconBox, { backgroundColor: '#E0F2F1' }]}>
+                        <Ionicons name="people" size={24} color="#00796B" />
+                    </View>
+                    <View style={styles.cardContent}>
+                        <H3 style={styles.cardTitle}>Ansatte</H3>
+                        <Body style={styles.cardSubtitle}>Rediger team-oversikten</Body>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={Colors.neutral.lightGray} />
+                </TouchableOpacity>
 
-                <TouchableOpacity style={styles.card} onPress={() => { }} activeOpacity={0.8}>
+                <H3 style={styles.sectionTitle}>Drift & Kommunikasjon</H3>
+
+                <TouchableOpacity style={styles.card} onPress={() => router.push('/admin/notifications')} activeOpacity={0.8}>
                     <View style={[styles.iconBox, { backgroundColor: '#E8F5E9' }]}>
                         <Ionicons name="notifications" size={24} color="#2E7D32" />
                     </View>
                     <View style={styles.cardContent}>
                         <H3 style={styles.cardTitle}>Push-varsel</H3>
-                        <Body style={styles.cardSubtitle}>Send melding til alle</Body>
+                        <Body style={styles.cardSubtitle}>Send melding til alle kunder</Body>
                     </View>
                     <Ionicons name="chevron-forward" size={20} color={Colors.neutral.lightGray} />
                 </TouchableOpacity>
 
-                <H3 style={styles.sectionTitle}>System</H3>
-
-                <TouchableOpacity style={styles.card} onPress={handleSeedData} activeOpacity={0.8}>
+                <TouchableOpacity style={styles.card} onPress={() => router.push('/admin/config')} activeOpacity={0.8}>
                     <View style={[styles.iconBox, { backgroundColor: '#FFEBEE' }]}>
-                        <Ionicons name="cloud-upload" size={24} color="#C62828" />
+                        <Ionicons name="settings" size={24} color="#C62828" />
                     </View>
                     <View style={styles.cardContent}>
-                        <H3 style={styles.cardTitle}>Last opp Start-data</H3>
-                        <Body style={styles.cardSubtitle}>Synkroniser lokale filer til skyen</Body>
+                        <H3 style={styles.cardTitle}>Drift & Info</H3>
+                        <Body style={styles.cardSubtitle}>Åpningstider, nød-banner m.m.</Body>
                     </View>
-                    {loading ? (
-                        <ActivityIndicator size="small" color={Colors.primary.main} />
-                    ) : (
-                        <Ionicons name="chevron-forward" size={20} color={Colors.neutral.lightGray} />
-                    )}
+                    <Ionicons name="chevron-forward" size={20} color={Colors.neutral.lightGray} />
                 </TouchableOpacity>
+
+                <View style={{ marginTop: 40, alignItems: 'center' }}>
+                    <TouchableOpacity onPress={() => router.push('/admin/seed')} style={{ padding: 10 }}>
+                        <Body style={{ color: Colors.neutral.darkGray, fontSize: 12, opacity: 0.5 }}>
+                            Database-verktøy (Klikk for å laste opp standardinnhold)
+                        </Body>
+                    </TouchableOpacity>
+                </View>
+
+
 
             </ScrollView>
         </View>

@@ -1,12 +1,15 @@
-import { EMPLOYEES } from '@/src/constants/Employees';
+import { EMPLOYEES, Employee } from '@/src/constants/Employees';
+import { EMPLOYEE_IMAGES } from '@/src/constants/LocalImageMap';
 import { GradientHeader } from '@/src/components/GradientHeader';
 import { Colors, Spacing } from '@/src/theme/Theme';
 import { Body, H2, H3 } from '@/src/theme/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Linking, Platform, ScrollView, StyleSheet, TouchableOpacity, View, LayoutAnimation, UIManager, Image } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Linking, Platform, ScrollView, StyleSheet, TouchableOpacity, View, LayoutAnimation, UIManager, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ContentService } from '@/src/services/ContentService';
+import { useFocusEffect } from '@react-navigation/native';
 
 if (Platform.OS === 'android') {
     if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -17,6 +20,29 @@ if (Platform.OS === 'android') {
 export default function AboutScreen() {
     const router = useRouter();
     const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadEmployees();
+        }, [])
+    );
+
+    const loadEmployees = async () => {
+        const data = await ContentService.getAllEmployees();
+
+        // Sort to match original order
+        const sortedData = data.sort((a, b) => {
+            const indexA = EMPLOYEES.findIndex(e => e.name === a.name);
+            const indexB = EMPLOYEES.findIndex(e => e.name === b.name);
+            // If not found in original list (new employees), put them at the end
+            return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+        });
+
+        setEmployees(sortedData);
+        setLoading(false);
+    };
 
     const handleCall = () => {
         Linking.openURL('tel:+4721423636');
@@ -56,7 +82,7 @@ export default function AboutScreen() {
                 <View style={styles.section}>
                     <View style={{ alignItems: 'center', marginBottom: Spacing.l }}>
                         <Image
-                            source={require('../assets/images/tm-logo.png')}
+                            source={require('@/assets/images/tm-logo.png')}
                             style={styles.pageLogo}
                             resizeMode="contain"
                         />
@@ -67,45 +93,53 @@ export default function AboutScreen() {
                     </Body>
                 </View>
 
-
-
                 {/* Team Section */}
                 <H3 style={styles.subHeading}>Vårt Team</H3>
-                {/* @ts-ignore */}
-                {EMPLOYEES.map((employee, index) => {
-                    const isExpanded = expandedIndex === index;
-                    return (
-                        <TouchableOpacity
-                            key={index}
-                            style={[styles.card, isExpanded && styles.cardExpanded]}
-                            activeOpacity={0.9}
-                            onPress={() => {
-                                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                                setExpandedIndex(isExpanded ? null : index);
-                            }}
-                        >
-                            <View style={styles.doctorHeader}>
-                                <Image source={employee.image} style={styles.avatar} />
-                                <View style={styles.doctorInfo}>
-                                    <H3 style={styles.doctorName}>{employee.name}</H3>
-                                    <Body style={styles.doctorTitle}>{employee.title}</Body>
-                                </View>
-                                <Ionicons
-                                    name={isExpanded ? "chevron-up" : "chevron-down"}
-                                    size={24}
-                                    color={Colors.neutral.lightGray}
-                                />
-                            </View>
 
-                            {isExpanded && (
-                                <View style={styles.bioContainer}>
-                                    <View style={styles.separator} />
-                                    <Body style={styles.bioText}>{employee.bio}</Body>
+                {loading ? (
+                    <ActivityIndicator size="large" color={Colors.primary.deep} />
+                ) : (
+                    employees.map((employee, index) => {
+                        const isExpanded = expandedIndex === index;
+                        // Handle image: Check for remote URL first, then fallback to local map
+                        const localImage = EMPLOYEE_IMAGES[employee.name];
+                        const displayImage = (employee.image && typeof employee.image === 'string')
+                            ? { uri: employee.image }
+                            : (localImage || require('@/assets/images/tm-logo.png')); // Fallback to logo if absolutely nothing
+
+                        return (
+                            <TouchableOpacity
+                                key={employee.name} // Use name as key
+                                style={[styles.card, isExpanded && styles.cardExpanded]}
+                                activeOpacity={0.9}
+                                onPress={() => {
+                                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                                    setExpandedIndex(isExpanded ? null : index);
+                                }}
+                            >
+                                <View style={styles.doctorHeader}>
+                                    <Image source={displayImage} style={styles.avatar} />
+                                    <View style={styles.doctorInfo}>
+                                        <H3 style={styles.doctorName}>{employee.name}</H3>
+                                        <Body style={styles.doctorTitle}>{employee.title}</Body>
+                                    </View>
+                                    <Ionicons
+                                        name={isExpanded ? "chevron-up" : "chevron-down"}
+                                        size={24}
+                                        color={Colors.neutral.lightGray}
+                                    />
                                 </View>
-                            )}
-                        </TouchableOpacity>
-                    );
-                })}
+
+                                {isExpanded && (
+                                    <View style={styles.bioContainer}>
+                                        <View style={styles.separator} />
+                                        <Body style={styles.bioText}>{employee.bio}</Body>
+                                    </View>
+                                )}
+                            </TouchableOpacity>
+                        );
+                    })
+                )}
 
                 {/* Contact Actions */}
                 <H3 style={styles.subHeading}>Kontakt oss</H3>

@@ -1,21 +1,62 @@
 import { useAuth } from '@/src/context/AuthContext';
 import { Colors, Spacing } from '@/src/theme/Theme';
-import { Body, H2, H3 } from '@/src/theme/Typography';
+import { Body, H1, H2, H3 } from '@/src/theme/Typography';
+import { LinearGradient } from 'expo-linear-gradient';
+import { GradientHeader } from '@/src/components/GradientHeader'; // Can keep or remove if we want to reuse later, but lint unused might trigger
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { Dimensions, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ServiceCard } from '@/src/components/ServiceCard';
-import { TREATMENT_MENU } from '@/src/constants/Menu';
-
+import { ContentService, treatmentMenuItem } from '@/src/services/ContentService';
+import { LOCAL_ASSET_MAP } from '@/src/constants/LocalAssets';
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
     const router = useRouter();
     const { user } = useAuth();
-    const [selectedTab, setSelectedTab] = useState('Behandlinger'); // Changed default to Behandlinger
+    const [selectedTab, setSelectedTab] = useState('');
+    const [treatments, setTreatments] = useState<treatmentMenuItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    // State for dynamic config
+    const [alertBanner, setAlertBanner] = React.useState<{ active: boolean, message: string } | null>(null);
+
+    useEffect(() => {
+        loadTreatments();
+    }, []);
+
+    useFocusEffect(
+        React.useCallback(() => {
+            loadConfig();
+        }, [])
+    );
+
+    const loadConfig = async () => {
+        try {
+            const config = await ContentService.getAppConfig();
+            if (config && config.alertBanner) {
+                setAlertBanner(config.alertBanner);
+            }
+        } catch (e) {
+            console.error("Failed to load config", e);
+        }
+    };
+
+    const loadTreatments = async () => {
+        const data = await ContentService.getAllTreatments();
+        // Fallback to static if empty? Or just show empty?
+        // Let's assume Seed worked. 
+        if (data.length > 0) {
+            setTreatments(data);
+        } else {
+            // Optional: Fallback to static menu if fetch fails or is empty, 
+            // but we want to test the CMS connection, so we rely on data.
+        }
+        setLoading(false);
+    };
 
     // Handle Tab Press
     const handleTabPress = (tab: string) => {
@@ -25,7 +66,7 @@ export default function DashboardScreen() {
         } else if (tab === 'Bestill time') {
             router.push('/booking');
         } else if (tab === 'Gavekort') {
-            router.push('/shop/giftcard');
+            router.push('/giftcard');
         } else if (tab === 'Priser') {
             router.push('/prices');
         } else if (tab === 'Om oss') {
@@ -36,24 +77,35 @@ export default function DashboardScreen() {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-
-                {/* Header Section */}
+        <View style={styles.container}>
+            <SafeAreaView edges={['top']} style={{ backgroundColor: '#FDFBF7' }}>
                 <View style={styles.headerCentered}>
                     <Image
                         source={require('@/assets/images/tm-logo.png')}
                         style={styles.headerLogo}
                         resizeMode="contain"
                     />
-                    <Body style={styles.greeting}>Hei, {user?.name || 'Gjest'} 👋</Body>
-                    <H2 style={styles.mainQuestion}>Hva kan vi hjelpe deg med?</H2>
+                    <H2 style={styles.greeting}>Hei, {(user as any)?.name || (user as any)?.firstName || 'Gjest'} 👋</H2>
+                    <H1 style={styles.mainQuestion}>Hva kan vi hjelpe deg med?</H1>
                 </View>
 
+                {/* Dynamic Alert Banner */}
+                {alertBanner?.active && (
+                    <View style={styles.alertBanner}>
+                        <Ionicons name="alert-circle" size={20} color="#856404" style={{ marginRight: 8 }} />
+                        <Body style={{ color: '#856404', flex: 1, fontSize: 13 }}>{alertBanner.message}</Body>
+                    </View>
+                )}
+            </SafeAreaView>
+
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
                 {/* Tab Selector */}
                 <View style={styles.tabContainer}>
                     <View style={styles.tabList}>
-                        {['Behandlinger', 'Bestill time', 'Gavekort', 'Priser', 'Om oss', 'Kontakt'].map((tab) => (
+                        {['Bestill time', 'Gavekort', 'Priser', 'Om oss', 'Kontakt'].map((tab) => (
                             <TouchableOpacity
                                 key={tab}
                                 style={[styles.tabButton, selectedTab === tab && styles.tabButtonActive]}
@@ -67,26 +119,37 @@ export default function DashboardScreen() {
 
                 {/* Main Cards Stack */}
                 <View style={styles.cardStack}>
-                    {/* Dynamic Service Cards from Scraped Menu */}
-                    {TREATMENT_MENU.filter(item => item.id !== 'priser').map((item) => (
-                        <ServiceCard
-                            key={item.id}
-                            title={item.title}
-                            subtitle={item.subtitle}
-                            iconName={item.icon as any}
-                            image={item.image}
-                            buttonText="Les mer"
-                            onPress={() => {
-                                if (item.details) {
-                                    router.push(`/treatment/${item.id}`);
-                                } else if (item.id === 'bestill') {
-                                    router.push('/booking');
-                                } else {
-                                    router.push({ pathname: '/webview', params: { url: item.url, title: item.title } });
-                                }
-                            }}
-                        />
-                    ))}
+                    {loading ? (
+                        <View style={{ height: 200, justifyContent: 'center', alignItems: 'center' }}>
+                            {/* Simple text loading or spinner */}
+                            <Text style={{ color: Colors.neutral.darkGray }}>Laster behandlinger...</Text>
+                        </View>
+                    ) : (
+                        /* Dynamic Service Cards from ContentService */
+                        treatments.filter(item => item.id !== 'priser').map((item) => (
+                            <ServiceCard
+                                key={item.id}
+                                title={item.title}
+                                subtitle={item.subtitle}
+                                // Handle icon safely - use item.icon if it exists (for laser/rose/apps), otherwise check if we have a local asset map
+                                // If we have a local asset map for this ID, we prefer using that as IMAGE, so we pass iconName undefined unless it's explicitly set.
+                                iconName={(item.icon as any) || (LOCAL_ASSET_MAP[item.id] ? undefined : 'sparkles-outline')}
+                                // Handle image safely (local assets vs strings)
+                                // Use the local asset map if available, otherwise use item.image (which might be a URL or null)
+                                image={LOCAL_ASSET_MAP[item.id] || item.image}
+                                buttonText="Les mer"
+                                onPress={() => {
+                                    if (item.details) {
+                                        router.push(`/treatment/${item.id}`);
+                                    } else if (item.id === 'bestill') {
+                                        router.push('/booking');
+                                    } else {
+                                        router.push({ pathname: '/webview', params: { url: item.url, title: item.title } });
+                                    }
+                                }}
+                            />
+                        ))
+                    )}
 
 
                     <View style={{ height: 20 }} />
@@ -119,7 +182,7 @@ export default function DashboardScreen() {
 
                 <View style={{ height: 40 }} />
             </ScrollView>
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -134,23 +197,27 @@ const styles = StyleSheet.create({
     // Header
     headerCentered: {
         alignItems: 'center',
-        paddingVertical: Spacing.xl,
+        paddingVertical: Spacing.l,
         paddingHorizontal: Spacing.m,
+        backgroundColor: Colors.background.main,
     },
     headerLogo: {
         width: 180,
-        height: 45,
-        marginBottom: Spacing.m,
+        height: 60,
+        marginBottom: Spacing.s,
     },
     greeting: {
-        color: Colors.primary.dark,
-        marginBottom: Spacing.xs,
-        fontSize: 16,
+        color: '#4A2B29', // Matching the reddish tint from screenshot intuition or primary dark
+        fontSize: 18,
+        fontWeight: '500',
+        marginBottom: 4,
     },
     mainQuestion: {
-        color: '#4A2B29',
+        color: '#2C2C2C',
+        fontSize: 24,
+        fontWeight: 'bold',
         textAlign: 'center',
-        fontSize: 22,
+        marginBottom: Spacing.m,
     },
     // Tabs
     tabContainer: {
@@ -228,5 +295,16 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.1)',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    alertBanner: {
+        backgroundColor: '#fff3cd',
+        padding: 10,
+        marginHorizontal: Spacing.m,
+        marginBottom: Spacing.m,
+        borderRadius: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#ffecb5'
     },
 });
