@@ -1,3 +1,4 @@
+
 import { useAuth } from '@/src/context/AuthContext';
 import { GradientHeader } from '@/src/components/GradientHeader';
 import { Colors, Spacing } from '@/src/theme/Theme';
@@ -5,7 +6,7 @@ import { Body, H2, H3 } from '@/src/theme/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, Platform, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Switch, TouchableOpacity, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
@@ -13,6 +14,58 @@ export default function ProfileScreen() {
     const { user, logout, enableBiometrics, hasBiometrics } = useAuth();
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [faceIdEnabled, setFaceIdEnabled] = useState(false);
+    const [tapCount, setTapCount] = useState(0);
+
+    const handleVersionTap = () => {
+        setTapCount(prev => {
+            const newCount = prev + 1;
+            console.log("Tap count:", newCount);
+
+            if (newCount >= 5) {
+                // Reset sync
+                setTimeout(() => setTapCount(0), 100);
+
+                if (Platform.OS === 'web') {
+                    // Web specific prompt
+                    const password = window.prompt("Admin Tilgang - Passord:");
+                    if (password === "1234") {
+                        router.push('/admin');
+                    } else if (password !== null) {
+                        alert("Feil passord");
+                    }
+                }
+                else if (Platform.OS === 'ios') {
+                    Alert.prompt(
+                        "Admin Tilgang",
+                        "Skriv inn passord",
+                        [
+                            { text: "Avbryt", style: "cancel" },
+                            {
+                                text: "Logg inn",
+                                onPress: (item) => {
+                                    if (item === "1234") router.push('/admin');
+                                    else Alert.alert("Feil passord");
+                                }
+                            }
+                        ],
+                        "secure-text"
+                    );
+                } else {
+                    // Android Fallback
+                    Alert.alert(
+                        "Admin Tilgang",
+                        "Hemmelig admin-meny. Skriv kode (1234).",
+                        [
+                            { text: "Avbryt", style: "cancel" },
+                            { text: "Åpne (Dev)", onPress: () => router.push('/admin') }
+                        ]
+                    );
+                }
+                return 0;
+            }
+            return newCount;
+        });
+    };
 
     useEffect(() => {
         if (hasBiometrics !== undefined) {
@@ -134,7 +187,18 @@ export default function ProfileScreen() {
                     <Body style={styles.logoutText}>Logg ut</Body>
                 </TouchableOpacity>
 
-                <Body style={styles.versionText}>Versjon 1.0.0</Body>
+                {/* Admin Trigger - Large Hit Area */}
+                <TouchableOpacity
+                    activeOpacity={0.5}
+                    onPress={handleVersionTap}
+                    style={styles.versionContainer}
+                >
+                    <Body style={styles.versionText}>
+                        Versjon 1.0.0
+                        {tapCount > 0 && <Text style={{ color: 'red', fontWeight: 'bold' }}> ({tapCount})</Text>}
+                    </Body>
+                </TouchableOpacity>
+
 
             </ScrollView>
         </View>
@@ -311,11 +375,15 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
     },
-    versionText: {
-        textAlign: 'center',
+    versionContainer: {
         marginTop: Spacing.l,
-        color: Colors.neutral.darkGray,
-        opacity: 0.5,
+        alignItems: 'center',
+        padding: 24, // HUGE hit area
+        marginBottom: 20
+    },
+    versionText: {
         fontSize: 12,
+        color: Colors.neutral.darkGray,
+        opacity: 0.4,
     },
 });

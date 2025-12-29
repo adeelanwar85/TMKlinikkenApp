@@ -31,7 +31,7 @@ export default function DashboardScreen() {
         } else if (tab === 'Om oss') {
             router.push('/about');
         } else if (tab === 'Kontakt') {
-            router.push('/about');
+            router.push('/contact');
         }
     };
 

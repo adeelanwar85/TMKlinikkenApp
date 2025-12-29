@@ -12,12 +12,14 @@ import {
     LayoutAnimation,
     Platform,
     UIManager,
-    Image
+    Image,
+    ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PRICES, PriceCategory } from '@/src/constants/Prices';
 import { useRouter } from 'expo-router';
 import { LaserIcon } from '@/src/components/icons/LaserIcon';
+import { useTreatments } from '@/src/hooks/useTreatments';
 
 if (Platform.OS === 'android') {
     if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -27,6 +29,7 @@ if (Platform.OS === 'android') {
 
 export default function PricesScreen() {
     const router = useRouter();
+    const { treatments, loading, refresh } = useTreatments();
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
@@ -46,21 +49,22 @@ export default function PricesScreen() {
     const handleBack = () => router.back();
     const handleBook = () => router.push('/booking');
 
-    const filterPrices = () => {
-        if (!searchQuery) return PRICES;
+    const filterPrices = (overrideQuery?: string) => {
+        // Use live treatments instead of static PRICES
+        const dataToFilter = treatments;
 
-        const query = searchQuery.toLowerCase().trim();
+        // Use override if provided (for instant updates), otherwise state
+        const queryToUse = overrideQuery !== undefined ? overrideQuery : searchQuery;
 
-        return PRICES.map(category => {
+        if (!queryToUse) return dataToFilter;
+
+        const query = queryToUse.toLowerCase().trim();
+
+        return dataToFilter.map(category => {
             // 1. Check if category title or keywords match
             const categoryMatch =
                 category.title.toLowerCase().includes(query) ||
                 category.keywords?.some(k => k.toLowerCase().includes(query));
-
-            // If category matches top-level, we still want to filter its items to show relevant ones, 
-            // OR show all if it's a direct category match. 
-            // Strategy: Filter items deeply. If category matches, maybe show all? 
-            // Let's stick to "show valid items only" unless the query is very generic for the category.
 
             // Check items matches
             const matchingItems = category.items.map(sub => {
@@ -73,12 +77,9 @@ export default function PricesScreen() {
                 const matchingData = sub.data.filter(item =>
                     item.name.toLowerCase().includes(query) ||
                     item.description?.toLowerCase().includes(query) ||
-                    (categoryMatch || subMatch) // If parent matches, include item? 
-                    // Better UX: strict filtering on items unless parent is a strong match.
-                    // But usually users want search to narrow down.
+                    (categoryMatch || subMatch)
                 );
 
-                // If subcategory matches, we might want to show all its data?
                 if (subMatch) {
                     return sub;
                 }
@@ -87,22 +88,24 @@ export default function PricesScreen() {
                 return null;
             }).filter(Boolean);
 
-            // If category matched via keywords (e.g. "botox" -> Injeksjoner), we should ensure we have items.
-            // If category matches but no items match specifically, we could arguably show all, 
-            // but usually we want to highlight the specific treatments.
-            // Let's return if we found any matching items.
             if (matchingItems.length > 0) return { ...category, items: matchingItems };
-
-            // Fallback: if category matched title/keywords but no specific items were caught (rare if keywords are good),
-            // maybe user just wants to see that category?
             if (categoryMatch) return category;
 
             return null;
         }).filter(Boolean) as PriceCategory[];
     };
 
+    if (loading) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={Colors.primary.main} />
+                <Body style={{ marginTop: 20 }}>Laster priser fra Hano...</Body>
+            </View>
+        );
+    }
+
     const filteredPrices = filterPrices();
-    const displayCategories = searchQuery ? filteredPrices : PRICES;
+    const displayCategories = searchQuery ? filteredPrices : treatments;
 
     const renderCategoryIcon = (category: PriceCategory) => {
         if (category.icon === 'custom-laser') {
@@ -211,8 +214,10 @@ export default function PricesScreen() {
                             setSearchQuery(text);
                             if (text) {
                                 // Expand all matching categories when searching
-                                const allTitles = new Set(filterPrices().map(p => p.title));
-                                setExpandedCategories(allTitles);
+                                // Pass 'text' explicitly to avoid stale state
+                                const results = filterPrices(text);
+                                const allIds = new Set(results.map(p => p.id));
+                                setExpandedCategories(allIds);
                             } else {
                                 setExpandedCategories(new Set());
                             }

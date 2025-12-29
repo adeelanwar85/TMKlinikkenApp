@@ -36,10 +36,18 @@ export default function AboutScreen() {
         if (url) Linking.openURL(url);
     };
 
+    const handleBack = () => router.back();
+
     return (
         <View style={styles.container}>
-            <SafeAreaView edges={['top']} style={styles.header}>
-                <H2 style={styles.pageTitle}>Om oss</H2>
+            <SafeAreaView edges={['top']} style={styles.safeArea}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                        <Ionicons name="arrow-back" size={24} color={Colors.primary.deep} />
+                    </TouchableOpacity>
+                    <H2 style={styles.pageTitle}>Om oss</H2>
+                    <View style={{ width: 40 }} />
+                </View>
             </SafeAreaView>
 
             <ScrollView contentContainerStyle={styles.content}>
@@ -149,40 +157,63 @@ const styles = StyleSheet.create({
         paddingTop: 0,
         paddingBottom: 40,
     },
+    safeArea: {
+        backgroundColor: Colors.background.main,
+        zIndex: 10,
+    },
     header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         paddingHorizontal: Spacing.m,
         paddingVertical: Spacing.s,
         backgroundColor: Colors.background.main,
     },
+    backButton: {
+        width: 40,
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginLeft: -Spacing.s,
+    },
     pageTitle: {
-        fontSize: 28,
+        fontSize: 20,
         color: Colors.primary.deep,
+        fontWeight: '600',
     },
     // introContainer: removed
     // logoCard: removed
     pageLogo: {
-        width: 140,
-        height: 45,
+        width: 180,
+        height: 60,
     },
     section: {
-        marginBottom: Spacing.l,
+        marginBottom: Spacing.xl,
         paddingHorizontal: Spacing.l,
+        alignItems: 'center',
     },
     heading: {
-        fontSize: 22,
+        fontSize: 24,
         color: Colors.primary.deep,
-        marginBottom: Spacing.s,
+        marginBottom: Spacing.m,
+        textAlign: 'center',
+        fontWeight: '600',
     },
     subHeading: {
-        fontSize: 18,
+        fontSize: 20,
         color: Colors.primary.deep,
         marginTop: Spacing.l,
         marginBottom: Spacing.m,
+        textAlign: 'center',
+        fontWeight: '500',
     },
     paragraph: {
         fontSize: 16,
-        lineHeight: 24,
+        lineHeight: 26,
         color: Colors.neutral.charcoal,
+        textAlign: 'center',
+        opacity: 0.9,
+        maxWidth: 600, // Prevent too wide lines on tablets
     },
     card: {
         backgroundColor: Colors.neutral.white,
