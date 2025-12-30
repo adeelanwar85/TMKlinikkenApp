@@ -12,6 +12,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ServiceCard } from '@/src/components/ServiceCard';
 import { ContentService, treatmentMenuItem } from '@/src/services/ContentService';
+import { NotificationService } from '@/src/services/NotificationService';
+import { TREATMENT_MENU } from '@/src/constants/Menu';
 import { LOCAL_ASSET_MAP } from '@/src/constants/LocalAssets';
 const { width } = Dimensions.get('window');
 
@@ -21,6 +23,7 @@ export default function DashboardScreen() {
     const [selectedTab, setSelectedTab] = useState('');
     const [treatments, setTreatments] = useState<treatmentMenuItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [unreadCount, setUnreadCount] = useState(0);
     // State for dynamic config
     const [alertBanner, setAlertBanner] = React.useState<{ active: boolean, message: string } | null>(null);
 
@@ -31,8 +34,14 @@ export default function DashboardScreen() {
     useFocusEffect(
         React.useCallback(() => {
             loadConfig();
+            checkUnreadNotifications();
         }, [])
     );
+
+    const checkUnreadNotifications = async () => {
+        const count = await NotificationService.getUnreadCount();
+        setUnreadCount(count);
+    };
 
     const loadConfig = async () => {
         try {
@@ -46,16 +55,20 @@ export default function DashboardScreen() {
     };
 
     const loadTreatments = async () => {
-        const data = await ContentService.getAllTreatments();
-        // Fallback to static if empty? Or just show empty?
-        // Let's assume Seed worked. 
-        if (data.length > 0) {
+        try {
+            // Fetch live data from Firestore
+            const data = await ContentService.getAllTreatments();
+
+            // Sort by order/id if needed, or trust the return order
+            // For now, simple sort or just set
             setTreatments(data);
-        } else {
-            // Optional: Fallback to static menu if fetch fails or is empty, 
-            // but we want to test the CMS connection, so we rely on data.
+        } catch (error) {
+            console.error("Failed to load treatments", error);
+            // Fallback to static if offline or error
+            setTreatments(TREATMENT_MENU);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     // Handle Tab Press
@@ -79,6 +92,19 @@ export default function DashboardScreen() {
     return (
         <View style={styles.container}>
             <SafeAreaView edges={['top']} style={{ backgroundColor: '#FDFBF7' }}>
+                {/* Top Bar with Notification Bell */}
+                <View style={styles.topBar}>
+                    <TouchableOpacity
+                        onPress={() => router.push('/notifications')}
+                        style={styles.notificationButton}
+                    >
+                        <Ionicons name="notifications-outline" size={24} color={Colors.primary.deep} />
+                        {unreadCount > 0 && (
+                            <View style={styles.badge} />
+                        )}
+                    </TouchableOpacity>
+                </View>
+
                 <View style={styles.headerCentered}>
                     <Image
                         source={require('@/assets/images/tm-logo.png')}
@@ -101,6 +127,7 @@ export default function DashboardScreen() {
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                stickyHeaderIndices={[0]}
             >
                 {/* Tab Selector */}
                 <View style={styles.tabContainer}>
@@ -132,11 +159,11 @@ export default function DashboardScreen() {
                                 title={item.title}
                                 subtitle={item.subtitle}
                                 // Handle icon safely - use item.icon if it exists (for laser/rose/apps), otherwise check if we have a local asset map
-                                // If we have a local asset map for this ID, we prefer using that as IMAGE, so we pass iconName undefined unless it's explicitly set.
+                                // Prioritize dynamic icon from DB if available
                                 iconName={(item.icon as any) || (LOCAL_ASSET_MAP[item.id] ? undefined : 'sparkles-outline')}
                                 // Handle image safely (local assets vs strings)
-                                // Use the local asset map if available, otherwise use item.image (which might be a URL or null)
-                                image={LOCAL_ASSET_MAP[item.id] || item.image}
+                                // Prioritize dynamic image URL from DB if available (item.image), then fallback to local asset
+                                image={item.image ? { uri: item.image } : LOCAL_ASSET_MAP[item.id]}
                                 buttonText="Les mer"
                                 onPress={() => {
                                     if (item.details) {
@@ -194,6 +221,38 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingBottom: 20,
     },
+    // Top Bar
+    topBar: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        paddingHorizontal: Spacing.m,
+        paddingTop: Spacing.s,
+        backgroundColor: Colors.background.main,
+    },
+    notificationButton: {
+        width: 40,
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 20,
+        backgroundColor: '#fff',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 1,
+    },
+    badge: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#D32F2F', // Red dot
+        borderWidth: 1.5,
+        borderColor: '#fff',
+    },
     // Header
     headerCentered: {
         alignItems: 'center',
@@ -223,6 +282,9 @@ const styles = StyleSheet.create({
     tabContainer: {
         marginBottom: Spacing.l,
         paddingHorizontal: Spacing.m,
+        backgroundColor: '#FDFBF7', // Match background for sticky effect
+        zIndex: 10,
+        paddingTop: 10, // Add breathing room when sticky
     },
     tabList: {
         flexDirection: 'row',

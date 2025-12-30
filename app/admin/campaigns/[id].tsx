@@ -14,6 +14,7 @@ export default function CampaignEditorScreen() {
     const isNew = id === 'new';
 
     const [loading, setLoading] = useState(!isNew);
+    const [sendPush, setSendPush] = useState(false);
     const [saving, setSaving] = useState(false);
 
     // Form State
@@ -72,6 +73,12 @@ export default function CampaignEditorScreen() {
             };
 
             await ContentService.saveCampaign(campaignData);
+
+            // Send Push if selected (only for new campaigns)
+            if (isNew && sendPush) {
+                await ContentService.sendBroadcastNotification(title, `Sjekk ut vår nye kampanje: ${title}!`);
+            }
+
             Alert.alert("Suksess", "Kampanje lagret", [{ text: "OK", onPress: () => router.back() }]);
         } catch (error) {
             Alert.alert("Feil", "Kunne ikke lagre kampanjen.");
@@ -181,6 +188,21 @@ export default function CampaignEditorScreen() {
                             trackColor={{ false: "#767577", true: Colors.primary.deep }}
                         />
                     </View>
+
+                    {/* Push Notification Option (Only for new campaigns) */}
+                    {isNew && (
+                        <View style={[styles.row, { marginTop: 20 }]}>
+                            <View>
+                                <Text style={styles.label}>Send Push-varsel?</Text>
+                                <Text style={{ fontSize: 12, color: '#666' }}>Varsle alle brukere om denne kampanjen</Text>
+                            </View>
+                            <Switch
+                                value={sendPush}
+                                onValueChange={setSendPush}
+                                trackColor={{ false: "#767577", true: Colors.primary.deep }}
+                            />
+                        </View>
+                    )}
 
                     {!isNew && (
                         <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>

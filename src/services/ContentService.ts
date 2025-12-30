@@ -262,6 +262,15 @@ export const ContentService = {
         }
     },
 
+    subscribeToNotifications: (callback: (messages: BroadcastMessage[]) => void) => {
+        // Listen to the last 5 notifications to detect new ones
+        const q = query(collection(db, COLLECTION_NOTIFICATIONS), orderBy('date', 'desc'));
+        return onSnapshot(q, (snapshot) => {
+            const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BroadcastMessage));
+            callback(messages);
+        });
+    },
+
     // --- SEEDING / MIGRATION ---
 
     seedAllData: async () => {

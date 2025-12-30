@@ -219,7 +219,7 @@ export default function PricesScreen() {
                     <TouchableOpacity onPress={handleBack} style={styles.backButton}>
                         <Ionicons name="arrow-back" size={24} color={Colors.primary.deep} />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Prisliste</Text>
+                    <Text style={styles.headerTitle}>Priser</Text>
                     <View style={{ width: 40 }} />
                 </View>
 

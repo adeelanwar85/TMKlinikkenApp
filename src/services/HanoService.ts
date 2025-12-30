@@ -2,6 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PriceCategory, PriceItem } from '../constants/Prices';
 import { Service, Department, AvailableSlot } from '../types/HanoTypes';
+import { LOCAL_ASSET_MAP } from '../constants/LocalAssets';
 
 // --- Configuration ---
 const API_KEY = process.env.EXPO_PUBLIC_HANO_API_KEY || '87656ea5-40bc-45bc-87b0-b236678bdfab';
@@ -107,16 +108,35 @@ const CATEGORY_MAPPING: Record<string, string> = {
     'sklerosering': 'laser',
     'konsultasjon': 'konsultasjon',
     'gavekort': 'gavekort',
+    'ansikt': 'ansikt',
+    'syre': 'ansikt',
+    'peeling': 'hudforbedring', // Catch 'Peelinger'
+    'kårforbedring': 'hudforbedring',
+    'kombinasjon': 'kombinasjon',
+    'voks': 'voks',
+    'lege': 'konsultasjon',
+    'sykepleier': 'konsultasjon',
+    'diverse': 'annet',
+    'injeksjon': 'injeksjoner', // Catch 'injeksjonsbehandlinger'
 };
 
+
+
+// ... (existing imports)
+
+// ...
+
 const CATEGORY_META: Record<string, { title: string, icon: any, image?: any }> = {
-    'injeksjoner': { title: 'Injeksjoner', icon: 'medkit-outline', image: require('@/assets/images/icons/icon_injeksjoner_final.png') },
-    'hudforbedring': { title: 'Hudforbedring', icon: 'water-outline', image: require('@/assets/images/icons/icon_hud_final.png') },
-    'laser': { title: 'Laserbehandling', icon: 'flash-outline' },
-    'vipper-bryn': { title: 'Vipper & Bryn', icon: 'eye-outline', image: require('@/assets/images/icons/icon_bryn_final.png') },
-    'kropp': { title: 'Kropp & Massasje', icon: 'body-outline', image: require('@/assets/images/icons/icon_kropp_final.png') },
-    'konsultasjon': { title: 'Konsultasjon', icon: 'chatbubbles-outline', image: require('@/assets/images/icons/icon_lege_final.png') },
-    'annet': { title: 'Annet', icon: 'apps-outline', image: require('@/assets/images/icons/icon_lege_final.png') }
+    'injeksjoner': { title: 'Injeksjoner', icon: 'medkit-outline', image: LOCAL_ASSET_MAP['injeksjoner'] },
+    'hudforbedring': { title: 'Hudforbedring', icon: 'water-outline', image: LOCAL_ASSET_MAP['peelinger'] }, // Using peelinger/hud icon
+    'laser': { title: 'Laserbehandling', icon: 'flash-outline', image: LOCAL_ASSET_MAP['laser'] },
+    'vipper-bryn': { title: 'Vipper & Bryn', icon: 'eye-outline', image: LOCAL_ASSET_MAP['vipper_bryn'] },
+    'kropp': { title: 'Kropp & Massasje', icon: 'body-outline', image: LOCAL_ASSET_MAP['kropp_massasje'] },
+    'ansikt': { title: 'Ansiktsbehandlinger', icon: 'happy-outline', image: LOCAL_ASSET_MAP['ansikt'] },
+    'kombinasjon': { title: 'Kombinasjonsbehandlinger', icon: 'layers-outline', image: LOCAL_ASSET_MAP['kombinasjon'] },
+    'voks': { title: 'Voksing', icon: 'cut-outline', image: LOCAL_ASSET_MAP['voks'] },
+    'konsultasjon': { title: 'Konsultasjon', icon: 'chatbubbles-outline', image: LOCAL_ASSET_MAP['diverse'] }, // Using EKG icon
+    'annet': { title: 'Annet', icon: 'apps-outline', image: LOCAL_ASSET_MAP['diverse'] }
 };
 
 // --- Helper: Local Storage for Mocks ---
@@ -181,7 +201,7 @@ export const HanoService = {
                 };
             });
 
-            const sortOrder = ['injeksjoner', 'hudforbedring', 'laser', 'vipper-bryn', 'kropp', 'konsultasjon', 'annet'];
+            const sortOrder = ['injeksjoner', 'laser', 'hudforbedring', 'ansikt', 'kombinasjon', 'vipper-bryn', 'voks', 'kropp', 'konsultasjon', 'annet'];
             return result.sort((a, b) => sortOrder.indexOf(a.id) - sortOrder.indexOf(b.id));
 
         } catch (error) {

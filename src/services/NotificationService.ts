@@ -116,6 +116,31 @@ export const NotificationService = {
     },
 
     /**
+     * Mark all notifications as read
+     */
+    async markAllAsRead() {
+        try {
+            const history = await NotificationService.getHistory();
+            const updated = history.map(n => ({ ...n, read: true }));
+            await AsyncStorage.setItem(NOTIFICATION_STORAGE_KEY, JSON.stringify(updated));
+        } catch (e) {
+            console.error("Failed to mark read", e);
+        }
+    },
+
+    /**
+     * Get number of unread notifications
+     */
+    async getUnreadCount(): Promise<number> {
+        try {
+            const history = await NotificationService.getHistory();
+            return history.filter(n => !n.read).length;
+        } catch (e) {
+            return 0;
+        }
+    },
+
+    /**
      * Schedule a notification 24 hours before the appointment
      */
     async scheduleAppointmentReminder(appointmentDate: Date, treatmentName: string) {

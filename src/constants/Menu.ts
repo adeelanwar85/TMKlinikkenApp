@@ -38,7 +38,7 @@ export const TREATMENT_MENU: treatmentMenuItem[] = [
         title: 'Injeksjonsbehandlinger',
         subtitle: 'Filler, rynkebehandling og skinbooster',
         url: 'https://www.tmklinikken.no/behandlinger/injeksjonsbehandlinger',
-        image: require('@/assets/images/icons/icon_injeksjoner_final.png'),
+        image: require('@/assets/images/icons/icon_injeksjoner_final_v7.png'),
         details: {
             heroImage: 'https://tmklinikken.no/wp-content/uploads/2024/11/Ny-hjemmeside-34.jpg',
             intro: "På TM er vårt helsepersonell utdannet injeksjonspesialister på høyeste nivå innen filler, medisinsk rynkebehandling og komplikasjoner. Vi har også utviklet egne injeksjonsteknikker på TM klinikken.",
@@ -81,7 +81,7 @@ export const TREATMENT_MENU: treatmentMenuItem[] = [
         title: 'Laserbehandlinger',
         subtitle: 'Hårfjerning, IPL og karfjerning',
         url: 'https://www.tmklinikken.no/behandlinger/laserbehandlinger',
-        icon: 'custom-laser',
+        image: require('@/assets/images/icons/icon_laser_final_v13.png'),
         details: {
             heroImage: 'https://tmklinikken.no/wp-content/uploads/2024/11/Ny-hjemmeside-59.jpg',
             intro: "Vi har de seneste laserne på markedet innen permanent hårreduksjon, blodkar, pigmenteringfjerning og tatoveringsfjerning. Behandlingene utføres kun av autorisert helsepersonell.",
@@ -310,7 +310,7 @@ export const TREATMENT_MENU: treatmentMenuItem[] = [
         title: 'Kombinasjonsbehandlinger',
         subtitle: 'Optimaliserte behandlingspakker',
         url: 'https://www.tmklinikken.no/behandlinger/kombinasjonsbehandlinger',
-        icon: 'rose-outline',
+        image: require('@/assets/images/icons/icon_kombinasjon_final_v15.png'),
         details: {
             heroImage: 'https://tmklinikken.no/wp-content/uploads/2025/02/3U7A9762.jpg',
             intro: "Ved å kombinere behandlinger som f.eks. Dermapen, kjemisk peel og injeksjoner, kan vi jobbe i ulike hudlag samtidig og oppnå raskere og bedre resultater.",
@@ -359,7 +359,7 @@ export const TREATMENT_MENU: treatmentMenuItem[] = [
         title: 'Voks',
         subtitle: 'Skånsom hårfjerning',
         url: 'https://www.tmklinikken.no/behandlinger/voks',
-        image: require('@/assets/images/icons/icon_kropp_final.png'),
+        image: require('@/assets/images/icons/icon_voks_final_v7.png'),
         details: {
             heroImage: 'https://tmklinikken.no/wp-content/uploads/2024/11/Ny-hjemmeside-29.jpg',
             intro: "Voksing er en populær og effektiv hårfjerningsmetode med langvarig resultat (3-4 uker). Vi bruker voks av høy kvalitet.",
@@ -395,7 +395,7 @@ export const TREATMENT_MENU: treatmentMenuItem[] = [
         title: 'Kropp & Massasje',
         subtitle: 'Velvære og avslapning',
         url: 'https://www.tmklinikken.no/behandlinger/kroppsbehandling-og-massasje',
-        image: require('@/assets/images/icons/icon_kropp_final.png'),
+        image: require('@/assets/images/icons/icon_kropp_final_v7.png'),
         details: {
             heroImage: 'https://tmklinikken.no/wp-content/uploads/2024/11/Ny-hjemmeside-29.jpg',
             intro: "Vi tilbyr avslappende massasjer for å redusere stress, løse opp muskelspenninger og øke ditt velvære.",
@@ -414,10 +414,10 @@ export const TREATMENT_MENU: treatmentMenuItem[] = [
     },
     {
         id: 'diverse',
-        title: 'Lege & Estetikk',
+        title: 'Lege og sykepleietjenester',
         subtitle: 'Medisinske tjenester',
         url: 'https://www.tmklinikken.no/behandlinger/lege-og-sykepleiertjenester',
-        icon: 'apps-outline',
+        image: require('@/assets/images/icons/icon_lege_ekg_final_v7.png'),
         details: {
             heroImage: 'https://tmklinikken.no/wp-content/uploads/2024/11/Ny-hjemmeside-53.jpg',
             intro: "TM Klinikken tilbyr også medisinske konsultasjoner og diverse estetiske behandlinger.",

@@ -21,13 +21,15 @@ export interface PriceCategory {
     }[];
 }
 
+import { LOCAL_ASSET_MAP } from './LocalAssets';
+
 export const PRICES: PriceCategory[] = [
     {
         id: 'injeksjoner',
         title: 'Injeksjonsbehandlinger',
         keywords: ['botox', 'azzalure', 'dysport', 'rynker', 'linjer', 'svette', 'migrene', 'filler', 'juvederm', 'teosyal', 'lepper', 'lips', 'kinn', 'hake', 'kjeve', 'profhilo', 'skinbooster'],
         icon: 'medkit-outline',
-        image: require('@/assets/images/icons/icon_injeksjoner_final.png'),
+        image: LOCAL_ASSET_MAP['injeksjoner'],
         items: [
             {
                 title: 'Medisinske injeksjoner',
@@ -98,8 +100,8 @@ export const PRICES: PriceCategory[] = [
         id: 'laser',
         title: 'Laserbehandlinger',
         keywords: ['hårfjerning', 'ipl', 'fotona', 'pigment', 'kar', 'sprengte blodkar', 'tatovering', 'neglesopp', 'fotona'],
-        icon: 'custom-laser', // Matches Home screen custom component
-        // image: removed to enforce custom icon usage
+        icon: 'flash-outline',
+        image: LOCAL_ASSET_MAP['laser'],
         items: [
             {
                 title: 'Hårfjerning Ansikt',
@@ -162,7 +164,7 @@ export const PRICES: PriceCategory[] = [
         title: 'Peelinger',
         keywords: ['kjemisk peel', 'syre', 'meline', 'neostrata', 'elixir', 'akne', 'arr', 'glød'],
         icon: 'water-outline',
-        image: require('@/assets/images/icons/icon_hud_final.png'),
+        image: LOCAL_ASSET_MAP['peelinger'],
         items: [
             {
                 title: 'Medisinsk Peel',
@@ -191,8 +193,8 @@ export const PRICES: PriceCategory[] = [
         id: 'ansikt',
         title: 'Ansiktsbehandlinger',
         keywords: ['hudpleie', 'rens', 'massasje', 'dermapen', 'microneedling', 'hydrafacial', 'mesoterapi', 'aquagold'],
-        icon: 'sparkles-outline',
-        image: require('@/assets/images/icons/icon_ansikt_final.png'),
+        icon: 'happy-outline',
+        image: LOCAL_ASSET_MAP['ansikt'],
         items: [
             {
                 title: 'Klassisk',
@@ -227,8 +229,8 @@ export const PRICES: PriceCategory[] = [
         id: 'kombinasjon',
         title: 'Kombinasjonsbehandlinger',
         keywords: ['pakke', 'kur', 'tilbud', 'dermapen', 'peel', 'filler'],
-        icon: 'rose-outline',
-        // image: require('@/assets/images/icons/icon_kombinasjoner_v3.png'), // Removing broken/inconsistent image
+        icon: 'layers-outline',
+        image: LOCAL_ASSET_MAP['kombinasjon'],
         items: [
             {
                 title: 'Medisinsk injeksjon + Peel',
@@ -254,7 +256,7 @@ export const PRICES: PriceCategory[] = [
         title: 'Vipper og Bryn',
         keywords: ['bryn', 'vipper', 'løft', 'laminering', 'farging', 'forming', 'brow bomber'],
         icon: 'eye-outline',
-        image: require('@/assets/images/icons/icon_bryn_final.png'),
+        image: LOCAL_ASSET_MAP['vipper_bryn'],
         items: [
             {
                 title: 'Styling',
@@ -282,8 +284,8 @@ export const PRICES: PriceCategory[] = [
         id: 'voks',
         title: 'Voks',
         keywords: ['hårfjerning', 'voksing', 'brasiliansk', 'legger', 'rygg'],
-        icon: 'leaf-outline',
-        image: require('@/assets/images/icons/icon_kropp_final.png'), // Reusing body icon for Waxing
+        icon: 'cut-outline',
+        image: LOCAL_ASSET_MAP['voks'],
         items: [
             {
                 title: 'Ansikt',
@@ -320,7 +322,7 @@ export const PRICES: PriceCategory[] = [
         title: 'Kropp & Massasje',
         keywords: ['massasje', 'velvære', 'aromaterapi', 'stress'],
         icon: 'body-outline',
-        image: require('@/assets/images/icons/icon_kropp_final.png'),
+        image: LOCAL_ASSET_MAP['kropp_massasje'],
         items: [
             {
                 title: 'Massasje',
@@ -337,7 +339,7 @@ export const PRICES: PriceCategory[] = [
         title: 'Diverse Behandlinger',
         keywords: ['tannbleking', 'lege', 'refusjon', 'migrene', 'plexr', 'øyelokk'],
         icon: 'apps-outline',
-        image: require('@/assets/images/icons/icon_lege_final.png'),
+        image: LOCAL_ASSET_MAP['diverse'],
         items: [
             {
                 title: 'Estetikk',

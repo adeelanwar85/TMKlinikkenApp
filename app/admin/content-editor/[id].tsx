@@ -18,6 +18,9 @@ export default function TreatmentEditor() {
     const [title, setTitle] = useState('');
     const [subtitle, setSubtitle] = useState('');
     const [heroImage, setHeroImage] = useState('');
+    // New Fields for Dashboard Card
+    const [image, setImage] = useState('');
+    const [icon, setIcon] = useState('');
 
     useEffect(() => {
         if (id) loadTreatment(id as string);
@@ -31,6 +34,8 @@ export default function TreatmentEditor() {
             setTitle(data.title);
             setSubtitle(data.subtitle);
             setHeroImage(data.details?.heroImage || '');
+            setImage(data.image || '');
+            setIcon(data.icon || '');
         } else {
             Alert.alert("Feil", "Fant ikke behandlingen.");
             router.back();
@@ -46,6 +51,8 @@ export default function TreatmentEditor() {
                 ...treatment,
                 title,
                 subtitle,
+                image, // Dashboard Image URL
+                icon,  // Ionicons Name
                 details: {
                     ...treatment.details,
                     heroImage: heroImage
@@ -121,6 +128,36 @@ export default function TreatmentEditor() {
                             {heroImage && heroImage.startsWith('http') && (
                                 <Body style={{ fontSize: 10, color: 'green', marginTop: 4 }}>Bilde-link ser gyldig ut</Body>
                             )}
+                        </View>
+
+                        <H3 style={styles.sectionTitle}>Dashboard Kort (Hjemskjerm)</H3>
+
+                        <View style={styles.inputGroup}>
+                            <Body style={styles.label}>Dashboard Bilde URL (Overstyrer ikon)</Body>
+                            <TextInput
+                                style={styles.input}
+                                value={image}
+                                onChangeText={setImage}
+                                placeholder="http://..."
+                                multiline
+                            />
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Body style={styles.label}>Eller: Ikon Navn (Ionicons)</Body>
+                            <TextInput
+                                style={styles.input}
+                                value={icon}
+                                onChangeText={setIcon}
+                                placeholder="f.eks. heart, medkit, sparkles"
+                                autoCapitalize="none"
+                            />
+                            {icon ? (
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, gap: 10 }}>
+                                    <Ionicons name={icon as any} size={24} color={Colors.primary.main} />
+                                    <Body style={{ fontSize: 12 }}>Forhåndsvisning</Body>
+                                </View>
+                            ) : null}
                         </View>
 
                         <View style={styles.divider} />
