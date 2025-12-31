@@ -135,6 +135,34 @@ export default function SubTreatmentEditor() {
         setContentBlocks(newBlocks);
     };
 
+    const addBlock = (type: 'text' | 'list') => {
+        const newBlock = {
+            title: type === 'text' ? 'Ny Tekst' : 'Ny Liste',
+            type: type,
+            content: type === 'text' ? '' : undefined,
+            listItems: type === 'list' ? [] : undefined
+        };
+        setContentBlocks([...contentBlocks, newBlock]);
+    };
+
+    const removeBlock = (index: number) => {
+        Alert.alert(
+            "Slett blokk",
+            "Er du sikker på at du vil fjerne denne blokken?",
+            [
+                { text: "Avbryt", style: "cancel" },
+                {
+                    text: "Slett",
+                    style: "destructive",
+                    onPress: () => {
+                        const newBlocks = contentBlocks.filter((_, i) => i !== index);
+                        setContentBlocks(newBlocks);
+                    }
+                }
+            ]
+        );
+    };
+
     return (
         <View style={styles.container}>
             <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -182,13 +210,29 @@ export default function SubTreatmentEditor() {
                         )}
 
                         <View style={styles.divider} />
-                        <H3 style={styles.sectionTitle}>Innholdsblokker</H3>
+                        <View style={styles.divider} />
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <H3 style={styles.sectionTitle}>Innholdsblokker</H3>
+                            <View style={{ flexDirection: 'row', gap: 10 }}>
+                                <TouchableOpacity onPress={() => addBlock('text')} style={styles.smallButton}>
+                                    <Ionicons name="text-outline" size={16} color="white" />
+                                    <Body style={styles.smallButtonText}>+ Tekst</Body>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => addBlock('list')} style={styles.smallButton}>
+                                    <Ionicons name="list-outline" size={16} color="white" />
+                                    <Body style={styles.smallButtonText}>+ Liste</Body>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
 
                         {/* Blocks Editor */}
                         {contentBlocks.map((block, index) => (
                             <View key={index} style={styles.blockCard}>
                                 <View style={styles.blockHeader}>
                                     <Body style={styles.blockLabel}>Blokk {index + 1} ({block.type || 'text'})</Body>
+                                    <TouchableOpacity onPress={() => removeBlock(index)}>
+                                        <Ionicons name="trash-outline" size={20} color="#E53935" />
+                                    </TouchableOpacity>
                                 </View>
 
                                 <View style={styles.inputGroup}>
@@ -251,5 +295,7 @@ const styles = StyleSheet.create({
     divider: { height: 1, backgroundColor: '#eee', marginVertical: Spacing.l },
     blockCard: { backgroundColor: '#F9F9F9', padding: Spacing.m, borderRadius: 12, marginBottom: Spacing.m, borderWidth: 1, borderColor: '#EEE' },
     blockHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-    blockLabel: { fontWeight: 'bold', color: Colors.primary.main }
+    blockLabel: { fontWeight: 'bold', color: Colors.primary.main },
+    smallButton: { flexDirection: 'row', backgroundColor: Colors.primary.main, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, alignItems: 'center', gap: 4 },
+    smallButtonText: { color: 'white', fontSize: 12, fontWeight: 'bold' }
 });

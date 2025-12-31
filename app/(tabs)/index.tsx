@@ -138,7 +138,7 @@ export default function DashboardScreen() {
                                 style={[styles.tabButton, selectedTab === tab && styles.tabButtonActive]}
                                 onPress={() => handleTabPress(tab)}
                             >
-                                <Text style={[styles.tabText, selectedTab === tab && styles.tabTextActive]}>{tab}</Text>
+                                <Text style={[styles.tabText, selectedTab === tab && styles.tabTextActive]}>{tab === 'Priser' ? 'Priser og behandlinger' : tab}</Text>
                             </TouchableOpacity>
                         ))}
                     </View>

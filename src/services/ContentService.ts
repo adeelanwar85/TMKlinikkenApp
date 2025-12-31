@@ -127,6 +127,15 @@ export const ContentService = {
         }
     },
 
+    deleteTreatment: async (id: string) => {
+        try {
+            await deleteDoc(doc(db, COLLECTION_TREATMENTS, id));
+        } catch (error) {
+            console.error("Error deleting treatment:", error);
+            throw error;
+        }
+    },
+
     // --- 2. CAMPAIGNS ---
 
     getAllCampaigns: async (): Promise<Campaign[]> => {

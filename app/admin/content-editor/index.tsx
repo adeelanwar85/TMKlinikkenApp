@@ -23,6 +23,26 @@ export default function ContentEditorList() {
         setLoading(false);
     };
 
+    const createNew = async () => {
+        const newId = `treatment_${Date.now()}`;
+        const newTreatment: treatmentMenuItem = {
+            id: newId,
+            title: 'Ny Behandling',
+            subtitle: 'Rediger meg',
+            url: '',
+            icon: 'star-outline',
+            details: {
+                intro: '',
+                subTreatments: []
+            }
+        };
+        setLoading(true);
+        await ContentService.saveTreatment(newTreatment);
+        setTreatments(prev => [...prev, newTreatment]);
+        setLoading(false);
+        router.push(`/admin/content-editor/${newId}`);
+    };
+
     const handleBack = () => router.back();
 
     return (
@@ -35,6 +55,9 @@ export default function ContentEditorList() {
                     <H2 style={styles.pageTitle}>Velg side å redigere</H2>
                     <TouchableOpacity onPress={loadTreatments} style={styles.refreshButton}>
                         <Ionicons name="refresh" size={24} color={Colors.primary.deep} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={createNew} style={styles.addButton}>
+                        <Ionicons name="add-circle" size={32} color={Colors.primary.deep} />
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
@@ -109,7 +132,13 @@ const styles = StyleSheet.create({
         height: 40,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: -Spacing.s,
+        marginRight: Spacing.s,
+    },
+    addButton: {
+        width: 40,
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     pageTitle: {
         fontSize: 20,

@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '@/src/theme/Theme';
 import { H2, H3, Body } from '@/src/theme/Typography';
-import { ContentService, treatmentMenuItem } from '@/src/services/ContentService';
+import { ContentService, treatmentMenuItem, SubTreatment } from '@/src/services/ContentService';
 
 export default function TreatmentEditor() {
     const { id } = useLocalSearchParams(); // Category ID (e.g. "peelinger")
@@ -65,6 +65,72 @@ export default function TreatmentEditor() {
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleDelete = async () => {
+        if (!treatment) return;
+        Alert.alert(
+            "Slett Behandling",
+            "Er du sikker på at du vil slette denne behandlingen? Dette kan ikke angres.",
+            [
+                { text: "Avbryt", style: "cancel" },
+                {
+                    text: "Slett",
+                    style: "destructive",
+                    onPress: async () => {
+                        setSaving(true);
+                        await ContentService.deleteTreatment(treatment.id);
+                        router.back();
+                    }
+                }
+            ]
+        );
+    };
+
+    const handleAddSub = () => {
+        if (!treatment) return;
+        const newSub: SubTreatment = {
+            id: `sub_${Date.now()}`,
+            title: 'Ny Underbehandling',
+            subtitle: 'Beskrivelse',
+            intro: '',
+            content: []
+        };
+
+        const currentSubs = treatment.details?.subTreatments || [];
+        setTreatment({
+            ...treatment,
+            details: {
+                ...treatment.details,
+                subTreatments: [...currentSubs, newSub]
+            }
+        });
+    };
+
+    const handleDeleteSub = (subId: string) => {
+        if (!treatment) return;
+        Alert.alert(
+            "Slett Underbehandling",
+            "Slette denne?",
+            [
+                { text: "Nei", style: "cancel" },
+                {
+                    text: "Ja",
+                    style: "destructive",
+                    onPress: () => {
+                        const currentSubs = treatment.details?.subTreatments || [];
+                        const updatedSubs = currentSubs.filter(s => s.id !== subId);
+                        setTreatment({
+                            ...treatment,
+                            details: {
+                                ...treatment.details,
+                                subTreatments: updatedSubs
+                            }
+                        });
+                    }
+                }
+            ]
+        );
     };
 
     const hasSubTreatments = treatment?.details?.subTreatments && treatment.details.subTreatments.length > 0;
@@ -166,6 +232,12 @@ export default function TreatmentEditor() {
                             {hasSubTreatments ? 'Undersider (Behandlinger)' : 'Seksjoner (Info)'}
                         </H3>
 
+                        {/* ADD SUB BUTTON */}
+                        <TouchableOpacity style={styles.addSubButton} onPress={handleAddSub}>
+                            <Ionicons name="add" size={20} color="white" />
+                            <Body style={{ color: 'white', fontWeight: 'bold', marginLeft: 5 }}>Ny Underside</Body>
+                        </TouchableOpacity>
+
                         {/* SUB TREATMENTS LIST */}
                         {hasSubTreatments && treatment?.details?.subTreatments?.map((sub, index) => (
                             <TouchableOpacity
@@ -180,7 +252,12 @@ export default function TreatmentEditor() {
                                     <View style={styles.dot} />
                                     <Body style={styles.subTitle}>{sub.title}</Body>
                                 </View>
-                                <Ionicons name="chevron-forward" size={18} color={Colors.neutral.lightGray} />
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
+                                    <TouchableOpacity onPress={() => handleDeleteSub(sub.id)}>
+                                        <Ionicons name="trash-outline" size={20} color={Colors.primary.deep} />
+                                    </TouchableOpacity>
+                                    <Ionicons name="chevron-forward" size={18} color={Colors.neutral.lightGray} />
+                                </View>
                             </TouchableOpacity>
                         ))}
 
@@ -200,9 +277,17 @@ export default function TreatmentEditor() {
                         ))}
 
                     </ScrollView>
+
+                    <View style={{ padding: 20 }}>
+                        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+                            <Body style={{ color: 'white', fontWeight: 'bold' }}>Slett hele behandlingen</Body>
+                        </TouchableOpacity>
+                    </View>
+
                 </KeyboardAvoidingView>
-            )}
-        </View>
+            )
+            }
+        </View >
     );
 }
 
@@ -307,5 +392,23 @@ const styles = StyleSheet.create({
         fontSize: 15,
         color: '#333',
         fontWeight: '500',
+    },
+    addSubButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: Colors.primary.main,
+        paddingHorizontal: 15,
+        paddingVertical: 8,
+        borderRadius: 20,
+        alignSelf: 'flex-start',
+        marginBottom: 15,
+    },
+    deleteButton: {
+        backgroundColor: '#E53935',
+        padding: 15,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 20,
     }
 });

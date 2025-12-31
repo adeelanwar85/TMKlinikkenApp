@@ -1,26 +1,29 @@
 # Progressive Handoff & Context
 
-**Date:** 29.12.2025
+**Date:** 31.12.2025
 **Project:** TM Klinikken App (React Native / Expo)
-**Last Action:** Implemented Real Booking Flow & Linked Prices.
+**Last Action:** Implemented Full Admin CMS & Repaired Content.
 
 ## 🚨 Critical Context
-1.  **Live Data Active**: `USE_MOCK` is set to `false` in `HanoService.ts`. The app requires valid API credentials in `.env` to function.
-2.  **Booking Flow**:
-    *   Price List (`prices.tsx`) acts as the primary entry point for booking specific treatments.
-    *   `BookingContext` holds the state.
-    *   `Id` and `Duration` are crucial for the mapping to work.
+1.  **Admin CMS is Live**: The Admin Panel (`/admin`, PIN: `1234`) is now a fully functional CMS.
+    - Can **Create/Delete Categories** (Updates Main Menu).
+    - Can **Create/Delete Sub-Treatments**.
+    - Can **Create/Delete Content Blocks** (Text/List) inside pages.
+2.  **Content Structure**: All main treatments (`Kropp`, `Lege`, `Kombinasjon`) were refactored to use `subTreatments` to ensure visual consistency with "Peelinger".
+3.  **Database Sync**: `Menu.ts` is the local backup, but **Firestore is the Source of Truth**. You MUST use the "Seed" function in Admin to push `Menu.ts` changes to the cloud if you edit the code manually. Conversely, edits made in the Admin Panel update Firestore directly.
 
 ## 🏗️ Architecture Status
-*   **Service Layer**: `HanoService.ts` is the single source of truth.
-*   **UI Integration**: `PricesScreen` is now tightly coupled with `BookingContext` to drive the flow.
+*   **ContentService**: Upgraded with `deleteTreatment` and robust `saveTreatment` logic.
+*   **Admin UI**: Enhanced `content-editor` with dynamic CRUD actions.
+*   **Navigation**: Main Menu is dynamically generated from Firestore data.
 
 ## 📝 Next Session Checklist
-1.  **Verify Calendar**: Check that `date-select.tsx` correctly displays slots for the *specific* treatment ID passed from the price list.
-2.  **User Details**: Verify `summary.tsx` captures user details correctly before submitting to Hano.
-3.  **Error Handling**: Test what happens if Hano returns an error (e.g. invalid API key) - does the app degrade gracefully?
+1.  **Deployment**: Configure `app.json` bundle IDs and prepare for App Store/Play Store (expo build).
+2.  **Mobile Testing**: Verify safe areas and gradients on actual iOS/Android devices.
+3.  **Verification**: Confirm all "Delete" actions in Admin work as expected and reflect immediately in the app (might require pull-to-refresh).
 
 ## 📂 Key Files
-*   `src/services/HanoService.ts`
-*   `app/(tabs)/prices.tsx`
-*   `src/context/BookingContext.tsx`
+*   `src/services/ContentService.ts` (CRUD Logic)
+*   `app/admin/content-editor/[id].tsx` (Treatment Editor)
+*   `app/admin/content-editor/[id]/[subId].tsx` (Page/Block Editor)
+*   `src/constants/Menu.ts` (Local Content Backup)
