@@ -1,10 +1,11 @@
 import { Colors, Spacing } from '@/src/theme/Theme';
-import { Body, H2, H3 } from '@/src/theme/Typography';
+import { Body, H2 } from '@/src/theme/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LegalService } from '@/src/services/LegalService';
 
 export default function LegalScreen() {
     const router = useRouter();
@@ -12,6 +13,19 @@ export default function LegalScreen() {
 
     const isPrivacy = type === 'privacy';
     const title = isPrivacy ? 'Personvernerklæring' : 'Vilkår for bruk';
+
+    const [content, setContent] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const load = async () => {
+            if (!type) return;
+            const doc = await LegalService.getLegalText(type);
+            setContent(doc.content);
+            setLoading(false);
+        };
+        load();
+    }, [type]);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -24,100 +38,33 @@ export default function LegalScreen() {
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
-                {isPrivacy ? <PrivacyContent /> : <TermsContent />}
+                {loading ? (
+                    <ActivityIndicator size="large" color={Colors.primary.deep} style={{ marginTop: 50 }} />
+                ) : (
+                    <View>
+                        {/* Simple Markdown-like Renderer */}
+                        {content.split('\n').map((line, index) => {
+                            const trimmed = line.trim();
+                            if (trimmed.startsWith('###')) {
+                                return (
+                                    <Body key={index} style={styles.heading}>
+                                        {trimmed.replace('###', '').trim()}
+                                    </Body>
+                                );
+                            }
+                            if (!trimmed) {
+                                return <View key={index} style={{ height: 10 }} />;
+                            }
+                            return (
+                                <Body key={index} style={styles.paragraph}>
+                                    {line}
+                                </Body>
+                            );
+                        })}
+                    </View>
+                )}
             </ScrollView>
         </SafeAreaView>
-    );
-}
-
-function PrivacyContent() {
-    return (
-        <View>
-            <Body style={styles.paragraph}>
-                Sist oppdatert: 17.12.2025
-            </Body>
-
-            <H3 style={styles.heading}>1. Innledning</H3>
-            <Body style={styles.paragraph}>
-                TM Legetjenester tar ditt personvern på alvor. Denne personvernerklæringen forklarer hvordan vi samler inn, bruker og beskytter dine personopplysninger når du bruker vår applikasjon og våre tjenester.
-            </Body>
-
-            <H3 style={styles.heading}>2. Ansvarlig for behandlingen</H3>
-            <Body style={styles.paragraph}>
-                TM Legetjenester er behandlingsansvarlig for personopplysningene som behandles i forbindelse med bruken av våre tjenester. Vi følger norsk personopplysningslov og EUs personvernforordning (GDPR).
-            </Body>
-
-            <H3 style={styles.heading}>3. Hvilke opplysninger behandler vi?</H3>
-            <Body style={styles.paragraph}>
-                Vi kan behandle følgende kategorier av personopplysninger:
-                {'\n'}• Kontaktinformasjon: Navn, adresse, telefonnummer, e-post.
-                {'\n'}• Identifikasjon: Fødselsnummer (for sikker identifisering og journalføring).
-                {'\n'}• Helseopplysninger: Informasjon nødvendig for å yte helsehjelp. Disse lagres i vårt pasientjournalsystem (Pasientsky).
-                {'\n'}• Tekniske data: Informasjon om din enhet og bruk av appen for å sikre drift og stabilitet.
-            </Body>
-
-            <H3 style={styles.heading}>4. Formålet med behandlingen</H3>
-            <Body style={styles.paragraph}>
-                Vi behandler opplysningene for å:
-                {'\n'}• Yte forsvarlig helsehjelp og administrere timer.
-                {'\n'}• Kommunisere med deg om timebestillinger og prøvesvar.
-                {'\n'}• Oppfylle lovpålagte krav til journalføring.
-            </Body>
-
-            <H3 style={styles.heading}>5. Deling av opplysninger</H3>
-            <Body style={styles.paragraph}>
-                Helseopplysninger behandles strengt konfidensielt og deles kun med autorisert helsepersonell. Vi deler ikke opplysninger med tredjeparter uten ditt samtykke, med mindre det er lovpålagt eller nødvendig for ytelse av helsehjelp (f.eks. til apotek for resept).
-            </Body>
-
-            <H3 style={styles.heading}>6. Dine rettigheter</H3>
-            <Body style={styles.paragraph}>
-                Du har rett til innsyn i egne personopplysninger, samt krav på retting eller sletting i henhold til gjeldende lovverk. For spørsmål om journalinnsyn, ta kontakt med klinikken direkte.
-            </Body>
-
-            <H3 style={styles.heading}>7. Kontakt oss</H3>
-            <Body style={styles.paragraph}>
-                Dersom du har spørsmål om personvern, kan du kontakte oss på:
-                {'\n'}E-post: post@tmklinikken.no
-                {'\n'}Telefon: 21 42 36 36
-            </Body>
-        </View>
-    );
-}
-
-function TermsContent() {
-    return (
-        <View>
-            <Body style={styles.paragraph}>
-                Gjeldende fra: 18.12.2025
-            </Body>
-
-            <H3 style={styles.heading}>1. Om Tjenesten</H3>
-            <Body style={styles.paragraph}>
-                TM Klinikken tilbyr medisinske og estetiske behandlinger. Vi tilstreber høyeste kvalitet og sikkerhet i alle våre tjenester.
-            </Body>
-
-            <H3 style={styles.heading}>2. Bestilling og Avbestilling</H3>
-            <Body style={styles.paragraph}>
-                Timebestilling er bindende. Avbestilling må skje senest **24 timer** før avtalt tid.
-                {'\n'}
-                Ved manglende oppmøte eller for sen avbestilling vil timen faktureres i sin helhet.
-            </Body>
-
-            <H3 style={styles.heading}>3. Aldersgrense</H3>
-            <Body style={styles.paragraph}>
-                Aldersgrensen for medisinsk rynkebehandling og fillere er 18 år. Vi sjekker legitimasjon.
-            </Body>
-
-            <H3 style={styles.heading}>4. Betaling</H3>
-            <Body style={styles.paragraph}>
-                Betaling skjer i klinikken via kort, Vipps eller faktura etter endt behandling.
-            </Body>
-
-            <H3 style={styles.heading}>5. Personvern</H3>
-            <Body style={styles.paragraph}>
-                Vi følger norsk lov om helsepersonell og personvern (GDPR). Din journal er taushetsbelagt og lagres trygt.
-            </Body>
-        </View>
     );
 }
 
@@ -149,14 +96,15 @@ const styles = StyleSheet.create({
     },
     heading: {
         fontSize: 18,
+        fontWeight: 'bold',
         marginBottom: Spacing.s,
-        marginTop: Spacing.l,
+        marginTop: Spacing.m,
         color: Colors.primary.deep,
     },
     paragraph: {
         fontSize: 15,
         lineHeight: 24,
         color: Colors.neutral.charcoal,
-        marginBottom: Spacing.s,
+        marginBottom: 4,
     },
 });

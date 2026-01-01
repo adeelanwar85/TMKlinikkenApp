@@ -40,7 +40,8 @@
           "icon": "./assets/images/tm-logo.png",
           "color": "#D4AF37"
         }
-      ]
+      ],
+      "expo-secure-store"
     ]
   }
 }

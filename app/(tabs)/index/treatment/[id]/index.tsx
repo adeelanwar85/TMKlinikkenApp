@@ -18,15 +18,32 @@ export default function TreatmentDetailScreen() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const load = async () => {
-            if (id) {
+        const loadContent = async () => {
+            try {
+                if (!id) {
+                    setLoading(false);
+                    return;
+                }
                 const data = await ContentService.getTreatmentById(id as string);
-                setTreatment(data);
+
+                if (data) {
+                    // If the loaded treatment ID is different from the requested ID, 
+                    // it means we found a parent for a sub-treatment ID. Redirect to sub-page.
+                    // FIX: Updated path to reflect nested stack location
+                    if (data.id !== id) {
+                        router.replace({ pathname: '/(tabs)/index/treatment/[id]/[subId]', params: { id: data.id, subId: id as string } });
+                        return;
+                    }
+                    setTreatment(data);
+                }
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
-        load();
-    }, [id]);
+        loadContent();
+    }, [id, router]);
 
     if (loading) {
         return (
@@ -94,7 +111,7 @@ export default function TreatmentDetailScreen() {
                                 <TouchableOpacity
                                     key={index}
                                     style={styles.subTreatmentCard}
-                                    onPress={() => router.push(`/treatment/${id}/${sub.id}`)}
+                                    onPress={() => router.push(`/treatment/${treatment.id}/${sub.id}`)}
                                 >
                                     <View style={styles.subContent}>
                                         <Text style={styles.subTitle}>{sub.title}</Text>

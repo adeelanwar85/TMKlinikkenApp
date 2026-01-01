@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '@/src/theme/Theme';
@@ -13,6 +13,7 @@ export default function TreatmentEditor() {
     const [treatment, setTreatment] = useState<treatmentMenuItem | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
 
     // Form State
     const [title, setTitle] = useState('');
@@ -22,9 +23,11 @@ export default function TreatmentEditor() {
     const [image, setImage] = useState('');
     const [icon, setIcon] = useState('');
 
-    useEffect(() => {
-        if (id) loadTreatment(id as string);
-    }, [id]);
+    useFocusEffect(
+        React.useCallback(() => {
+            if (id) loadTreatment(id as string);
+        }, [id])
+    );
 
     const loadTreatment = async (treatmentId: string) => {
         setLoading(true);
@@ -67,27 +70,59 @@ export default function TreatmentEditor() {
         }
     };
 
-    const handleDelete = async () => {
-        if (!treatment) return;
-        Alert.alert(
-            "Slett Behandling",
-            "Er du sikker på at du vil slette denne behandlingen? Dette kan ikke angres.",
-            [
-                { text: "Avbryt", style: "cancel" },
-                {
-                    text: "Slett",
-                    style: "destructive",
-                    onPress: async () => {
-                        setSaving(true);
-                        await ContentService.deleteTreatment(treatment.id);
-                        router.back();
+    const handleDelete = () => {
+        if (!treatment?.id) return;
+        const tId = treatment.id;
+
+        if (Platform.OS === 'web') {
+            if (window.confirm("Er du sikker på at du vil slette denne hovedkategorien permanent?")) {
+                performDelete(tId);
+            }
+        } else {
+            Alert.alert(
+                "Slett Behandling",
+                "Er du sikker? Dette sletter hele kategorien og alle undersider permanent.",
+                [
+                    { text: "Avbryt", style: "cancel" },
+                    {
+                        text: "Slett alt",
+                        style: "destructive",
+                        onPress: () => performDelete(tId)
                     }
-                }
-            ]
-        );
+                ]
+            );
+        }
     };
 
-    const handleAddSub = () => {
+    const performDelete = async (treatmentId: string) => {
+        console.log("Saving/Deleting treatment:", treatmentId);
+        setSaving(true);
+        try {
+            await ContentService.deleteTreatment(treatmentId);
+            console.log("Delete success");
+
+            if (Platform.OS === 'web') {
+                // Web alert might be blocked or ugly, just navigate
+                if (router.canGoBack()) router.back();
+                else router.replace('/admin/content-editor');
+            } else {
+                Alert.alert("Slettet", "Behandlingen er slettet.", [
+                    {
+                        text: "OK", onPress: () => {
+                            if (router.canGoBack()) router.back();
+                            else router.replace('/admin/content-editor');
+                        }
+                    }
+                ]);
+            }
+        } catch (error: any) {
+            console.error("Delete error:", error);
+            Alert.alert("Feil", "Kunne ikke slette: " + error.message);
+            setSaving(false);
+        }
+    };
+
+    const handleAddSub = async () => {
         if (!treatment) return;
         const newSub: SubTreatment = {
             id: `sub_${Date.now()}`,
@@ -98,39 +133,70 @@ export default function TreatmentEditor() {
         };
 
         const currentSubs = treatment.details?.subTreatments || [];
-        setTreatment({
+        const updatedSubs = [...currentSubs, newSub];
+
+        const updatedTreatment = {
             ...treatment,
             details: {
                 ...treatment.details,
-                subTreatments: [...currentSubs, newSub]
+                subTreatments: updatedSubs
             }
-        });
+        };
+
+        setTreatment(updatedTreatment); // Optimistic
+
+        try {
+            setSaving(true);
+            await ContentService.saveTreatment(updatedTreatment);
+        } catch (e: any) {
+            Alert.alert("Feil", "Kunne ikke lagre ny underside: " + e.message);
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleDeleteSub = (subId: string) => {
-        if (!treatment) return;
-        Alert.alert(
-            "Slett Underbehandling",
-            "Slette denne?",
-            [
-                { text: "Nei", style: "cancel" },
-                {
-                    text: "Ja",
-                    style: "destructive",
-                    onPress: () => {
-                        const currentSubs = treatment.details?.subTreatments || [];
-                        const updatedSubs = currentSubs.filter(s => s.id !== subId);
-                        setTreatment({
-                            ...treatment,
-                            details: {
-                                ...treatment.details,
-                                subTreatments: updatedSubs
-                            }
-                        });
+        if (Platform.OS === 'web') {
+            if (window.confirm("Er du sikker på at du vil slette denne undersiden permanent?")) {
+                performDeleteSub(subId);
+            }
+        } else {
+            Alert.alert(
+                "Slett Underside",
+                "Er du sikker på at du vil slette denne undersiden? Dette slettes permanent.",
+                [
+                    { text: "Avbryt", style: "cancel" },
+                    {
+                        text: "Slett",
+                        style: "destructive",
+                        onPress: () => performDeleteSub(subId)
                     }
-                }
-            ]
-        );
+                ]
+            );
+        }
+    };
+
+    const performDeleteSub = async (subId: string) => {
+        if (!treatment) return;
+        const currentSubs = treatment.details?.subTreatments || [];
+        const updatedSubs = currentSubs.filter(s => s.id !== subId);
+
+        const updatedTreatment = {
+            ...treatment,
+            details: {
+                ...treatment.details,
+                subTreatments: updatedSubs
+            }
+        };
+
+        setTreatment(updatedTreatment); // Optimistic
+
+        try {
+            await ContentService.saveTreatment(updatedTreatment);
+        } catch (e: any) {
+            Alert.alert("Feil", "Kunne ikke slette: " + e.message);
+            // Rollback? ideally yes, but for now simple error
+        }
     };
 
     const hasSubTreatments = treatment?.details?.subTreatments && treatment.details.subTreatments.length > 0;
@@ -144,7 +210,8 @@ export default function TreatmentEditor() {
                     </TouchableOpacity>
                     <H2 style={styles.pageTitle}>Rediger Kategori</H2>
                     <TouchableOpacity onPress={handleSave} disabled={saving} style={styles.saveButton}>
-                        {saving ? <ActivityIndicator color="white" /> : <Ionicons name="checkmark" size={24} color="white" />}
+                        {/* Text instead of Icon for clarity? No, checkmark is fine if we have feedback */}
+                        {saving ? <ActivityIndicator color="white" /> : <Ionicons name="cloud-upload" size={20} color="white" />}
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
@@ -243,7 +310,7 @@ export default function TreatmentEditor() {
                             <TouchableOpacity
                                 key={sub.id}
                                 style={styles.subCard}
-                                // Navigate to sub-editor (not created yet, but placeholder logic)
+                                // Navigate to sub-editor
                                 // We can use query params to identify: /admin/content-editor/peelinger?subId=inno
                                 // But better to use: /admin/content-editor/[id]/[subId]
                                 onPress={() => router.push(`/admin/content-editor/${id}/${sub.id}`)}
@@ -253,7 +320,10 @@ export default function TreatmentEditor() {
                                     <Body style={styles.subTitle}>{sub.title}</Body>
                                 </View>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
-                                    <TouchableOpacity onPress={() => handleDeleteSub(sub.id)}>
+                                    <TouchableOpacity onPress={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteSub(sub.id);
+                                    }}>
                                         <Ionicons name="trash-outline" size={20} color={Colors.primary.deep} />
                                     </TouchableOpacity>
                                     <Ionicons name="chevron-forward" size={18} color={Colors.neutral.lightGray} />
@@ -276,14 +346,50 @@ export default function TreatmentEditor() {
                             </TouchableOpacity>
                         ))}
 
+                        {/* Delete Treatment - Custom UI Confirmation */}
+                        {id !== 'new' && treatment && (
+                            <View style={{ marginTop: 40, alignItems: 'center', paddingBottom: 50 }}>
+                                {saving ? (
+                                    <View style={{ padding: 20 }}>
+                                        <ActivityIndicator color="red" />
+                                        <Body style={{ color: 'red', marginTop: 10 }}>Sletter...</Body>
+                                    </View>
+                                ) : (
+                                    <>
+                                        {!confirmDelete ? (
+                                            <TouchableOpacity
+                                                onPress={() => setConfirmDelete(true)}
+                                                style={{ padding: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                                            >
+                                                <Ionicons name="trash-outline" size={18} color="red" />
+                                                <Body style={{ color: 'red', fontSize: 14 }}>Slett hele denne kategorien</Body>
+                                            </TouchableOpacity>
+                                        ) : (
+                                            <View style={styles.deleteConfirmContainer}>
+                                                <Body style={{ color: Colors.neutral.charcoal, marginBottom: 10, fontWeight: '600' }}>
+                                                    Er du sikker? Dette kan ikke angres.
+                                                </Body>
+                                                <View style={{ flexDirection: 'row', gap: 15 }}>
+                                                    <TouchableOpacity
+                                                        onPress={() => setConfirmDelete(false)}
+                                                        style={styles.cancelDeleteButton}
+                                                    >
+                                                        <Text style={{ color: '#333' }}>Avbryt</Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity
+                                                        onPress={() => performDelete(treatment.id)}
+                                                        style={styles.confirmDeleteButton}
+                                                    >
+                                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Ja, slett alt</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            </View>
+                                        )}
+                                    </>
+                                )}
+                            </View>
+                        )}
                     </ScrollView>
-
-                    <View style={{ padding: 20 }}>
-                        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-                            <Body style={{ color: 'white', fontWeight: 'bold' }}>Slett hele behandlingen</Body>
-                        </TouchableOpacity>
-                    </View>
-
                 </KeyboardAvoidingView>
             )
             }
@@ -410,5 +516,26 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 20,
+    },
+    deleteConfirmContainer: {
+        backgroundColor: '#FFE5E5',
+        padding: 20,
+        borderRadius: 12,
+        alignItems: 'center',
+        width: '100%',
+    },
+    cancelDeleteButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        backgroundColor: 'white',
+        borderWidth: 1,
+        borderColor: '#ddd',
+    },
+    confirmDeleteButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        backgroundColor: '#E53935',
     }
 });

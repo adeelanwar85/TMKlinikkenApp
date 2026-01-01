@@ -11,11 +11,15 @@ export default function ShopScreen() {
             <SafeAreaView edges={['top']} style={styles.header}>
                 <Text style={styles.pageTitle}>Butikk</Text>
             </SafeAreaView>
-            {/* WebView takes remaining space */}
             <WebView
-                source={{ uri: 'https://www.tmklinikken.no/butikk' }}
+                source={{ uri: 'https://tmklinikken.no/butikk/' }}
                 style={styles.webview}
                 startInLoadingState
+                renderLoading={() => (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color={Colors.primary.main} />
+                    </View>
+                )}
             />
         </View>
     );
@@ -39,5 +43,11 @@ const styles = StyleSheet.create({
     webview: {
         flex: 1,
         overflow: 'hidden',
+    },
+    loadingContainer: {
+        ...StyleSheet.absoluteFillObject,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: Colors.background.main,
     }
 });

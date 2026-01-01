@@ -14,6 +14,7 @@ import { ServiceCard } from '@/src/components/ServiceCard';
 import { ContentService, treatmentMenuItem } from '@/src/services/ContentService';
 import { NotificationService } from '@/src/services/NotificationService';
 import { TREATMENT_MENU } from '@/src/constants/Menu';
+import { DASHBOARD_TABS, DashboardTab } from '@/src/config/Menus';
 import { LOCAL_ASSET_MAP } from '@/src/constants/LocalAssets';
 const { width } = Dimensions.get('window');
 
@@ -27,14 +28,11 @@ export default function DashboardScreen() {
     // State for dynamic config
     const [alertBanner, setAlertBanner] = React.useState<{ active: boolean, message: string } | null>(null);
 
-    useEffect(() => {
-        loadTreatments();
-    }, []);
-
     useFocusEffect(
         React.useCallback(() => {
             loadConfig();
             checkUnreadNotifications();
+            loadTreatments(); // Refresh content when returning from Admin
         }, [])
     );
 
@@ -72,20 +70,16 @@ export default function DashboardScreen() {
     };
 
     // Handle Tab Press
-    const handleTabPress = (tab: string) => {
-        setSelectedTab(tab);
-        if (tab === 'TM Klinikken') {
-            router.push({ pathname: '/webview', params: { url: 'https://www.tmklinikken.no', title: 'TM Klinikken' } });
-        } else if (tab === 'Bestill time') {
-            router.push('/booking');
-        } else if (tab === 'Gavekort') {
-            router.push('/giftcard');
-        } else if (tab === 'Priser') {
-            router.push('/prices');
-        } else if (tab === 'Om oss') {
-            router.push('/about');
-        } else if (tab === 'Kontakt') {
-            router.push('/contact');
+    const handleTabPress = (tab: DashboardTab) => {
+        setSelectedTab(tab.id);
+
+        if (tab.type === 'navigation' && tab.target) {
+            router.push(tab.target as any);
+        } else if (tab.type === 'webview' && tab.target) {
+            router.push({
+                pathname: '/webview',
+                params: { url: tab.target, title: tab.title || tab.label }
+            });
         }
     };
 
@@ -98,7 +92,7 @@ export default function DashboardScreen() {
                         onPress={() => router.push('/notifications')}
                         style={styles.notificationButton}
                     >
-                        <Ionicons name="notifications-outline" size={24} color={Colors.primary.deep} />
+                        <Ionicons name="notifications-outline" size={24} color={Colors.neutral.white} />
                         {unreadCount > 0 && (
                             <View style={styles.badge} />
                         )}
@@ -132,13 +126,15 @@ export default function DashboardScreen() {
                 {/* Tab Selector */}
                 <View style={styles.tabContainer}>
                     <View style={styles.tabList}>
-                        {['Bestill time', 'Gavekort', 'Priser', 'Om oss', 'Kontakt'].map((tab) => (
+                        {DASHBOARD_TABS.map((tab) => (
                             <TouchableOpacity
-                                key={tab}
-                                style={[styles.tabButton, selectedTab === tab && styles.tabButtonActive]}
+                                key={tab.id}
+                                style={[styles.tabButton, selectedTab === tab.id && styles.tabButtonActive]}
                                 onPress={() => handleTabPress(tab)}
                             >
-                                <Text style={[styles.tabText, selectedTab === tab && styles.tabTextActive]}>{tab === 'Priser' ? 'Priser og behandlinger' : tab}</Text>
+                                <Text style={[styles.tabText, selectedTab === tab.id && styles.tabTextActive]}>
+                                    {tab.displayLabel || tab.label}
+                                </Text>
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -148,7 +144,6 @@ export default function DashboardScreen() {
                 <View style={styles.cardStack}>
                     {loading ? (
                         <View style={{ height: 200, justifyContent: 'center', alignItems: 'center' }}>
-                            {/* Simple text loading or spinner */}
                             <Text style={{ color: Colors.neutral.darkGray }}>Laster behandlinger...</Text>
                         </View>
                     ) : (
@@ -160,13 +155,14 @@ export default function DashboardScreen() {
                                 subtitle={item.subtitle}
                                 // Handle icon safely - use item.icon if it exists (for laser/rose/apps), otherwise check if we have a local asset map
                                 // Prioritize dynamic icon from DB if available
-                                iconName={(item.icon as any) || (LOCAL_ASSET_MAP[item.id] ? undefined : 'sparkles-outline')}
+                                iconName={(item.icon as any) || (LOCAL_ASSET_MAP[item.id.toLowerCase()] ? undefined : 'sparkles-outline')}
                                 // Handle image safely (local assets vs strings)
                                 // Prioritize dynamic image URL from DB if available (item.image), then fallback to local asset
-                                image={item.image ? { uri: item.image } : LOCAL_ASSET_MAP[item.id]}
+                                image={item.image ? { uri: item.image } : LOCAL_ASSET_MAP[item.id.toLowerCase()]}
                                 buttonText="Les mer"
                                 onPress={() => {
                                     if (item.details) {
+                                        // Use verified absolute path
                                         router.push(`/treatment/${item.id}`);
                                     } else if (item.id === 'bestill') {
                                         router.push('/booking');
@@ -178,11 +174,10 @@ export default function DashboardScreen() {
                         ))
                     )}
 
-
                     <View style={{ height: 20 }} />
 
                     {/* Nettbutikk Card */}
-                    <TouchableOpacity style={styles.webshopCard} onPress={() => router.push({ pathname: '/webview', params: { url: 'https://www.tmklinikken.no/butikk', title: 'Nettbutikk' } })}>
+                    <TouchableOpacity style={styles.webshopCard} onPress={() => router.push({ pathname: '/webview', params: { url: 'https://tmklinikken.no/butikk/', title: 'Nettbutikk' } })}>
                         <View style={styles.webshopContent}>
                             <H3 style={{ color: Colors.neutral.white }}>Besøk vår nettbutikk</H3>
                             <Body style={{ color: Colors.neutral.lightGray, marginTop: 4 }}>Kjøp dine favorittprodukter online</Body>
@@ -209,7 +204,7 @@ export default function DashboardScreen() {
 
                 <View style={{ height: 40 }} />
             </ScrollView>
-        </View>
+        </View >
     );
 }
 
@@ -220,6 +215,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingBottom: 20,
+        marginTop: 0,
     },
     // Top Bar
     topBar: {
@@ -235,12 +231,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: 20,
-        backgroundColor: '#fff',
+        backgroundColor: Colors.primary.deep,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
+        shadowOpacity: 0.1,
         shadowRadius: 4,
-        elevation: 1,
+        elevation: 2,
     },
     badge: {
         position: 'absolute',
@@ -256,14 +252,15 @@ const styles = StyleSheet.create({
     // Header
     headerCentered: {
         alignItems: 'center',
-        paddingVertical: Spacing.l,
+        paddingVertical: 10, // Minimal padding
         paddingHorizontal: Spacing.m,
         backgroundColor: Colors.background.main,
+        paddingBottom: 5, // Tighter bottom
     },
     headerLogo: {
-        width: 180,
-        height: 60,
-        marginBottom: Spacing.s,
+        width: 160, // Slightly smaller
+        height: 50,
+        marginBottom: 5,
     },
     greeting: {
         color: '#4A2B29', // Matching the reddish tint from screenshot intuition or primary dark
@@ -273,18 +270,22 @@ const styles = StyleSheet.create({
     },
     mainQuestion: {
         color: '#2C2C2C',
-        fontSize: 24,
+        fontSize: 22, // Slightly smaller font
         fontWeight: 'bold',
         textAlign: 'center',
-        marginBottom: Spacing.m,
+        marginBottom: 5, // Tighten up
     },
     // Tabs
     tabContainer: {
-        marginBottom: Spacing.l,
+        marginBottom: 0,
         paddingHorizontal: Spacing.m,
-        backgroundColor: '#FDFBF7', // Match background for sticky effect
+        backgroundColor: '#FDFBF7', // Restore background
         zIndex: 10,
-        paddingTop: 10, // Add breathing room when sticky
+        paddingTop: 0,
+        paddingBottom: 5, // Tighten
+        // borderTopLeftRadius: 30, // Removed card look
+        // borderTopRightRadius: 30, 
+        overflow: 'hidden',
     },
     tabList: {
         flexDirection: 'row',

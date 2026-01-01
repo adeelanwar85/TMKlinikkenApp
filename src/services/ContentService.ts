@@ -49,6 +49,7 @@ export interface BroadcastMessage {
     body: string;
     date: number;
     sentBy?: string;
+    image?: string | null;
 }
 
 // --- Default Data for Config ---
@@ -106,14 +107,44 @@ export const ContentService = {
 
     getTreatmentById: async (id: string): Promise<treatmentMenuItem | null> => {
         try {
+            // 1. Try direct lookup (Top Level)
             const docRef = doc(db, COLLECTION_TREATMENTS, id);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                return docSnap.data() as treatmentMenuItem;
+            const snapshot = await getDoc(docRef);
+            if (snapshot.exists()) {
+                return snapshot.data() as treatmentMenuItem;
             }
+
+            // 2. If not found, search in all treatments (Deep Search for Sub ID)
+            const allDocs = await ContentService.getAllTreatments();
+            for (const t of allDocs) {
+                if (t.details?.subTreatments?.some(sub => sub.id === id)) {
+                    return t; // Return the PARENT
+                }
+            }
+
+            // 3. Fallback to constant menu (Direct)
+            const menuMatch = TREATMENT_MENU.find(t => t.id === id);
+            if (menuMatch) return menuMatch;
+
+            // 4. Fallback to constant menu (Deep Search)
+            for (const t of TREATMENT_MENU) {
+                if (t.details?.subTreatments?.some(sub => sub.id === id)) {
+                    return t;
+                }
+            }
+
             return null;
         } catch (error) {
             console.error("Error fetching treatment:", error);
+            // Fallback to local
+            const menuMatch = TREATMENT_MENU.find(t => t.id === id);
+            if (menuMatch) return menuMatch;
+            // Deep fallback local
+            for (const t of TREATMENT_MENU) {
+                if (t.details?.subTreatments?.some(sub => sub.id === id)) {
+                    return t;
+                }
+            }
             return null;
         }
     },
@@ -245,11 +276,12 @@ export const ContentService = {
 
     // --- 5. NOTIFICATIONS (Broadcast) ---
 
-    sendBroadcastNotification: async (title: string, body: string) => {
+    sendBroadcastNotification: async (title: string, body: string, image?: string) => {
         try {
             await addDoc(collection(db, COLLECTION_NOTIFICATIONS), {
                 title,
                 body,
+                image: image || null,
                 date: Date.now(),
                 sentBy: 'admin'
             });

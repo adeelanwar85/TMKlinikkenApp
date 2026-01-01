@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
     const router = useRouter();
-    const { user, logout, enableBiometrics, hasBiometrics } = useAuth();
+    const { user, logout, enableBiometrics, hasBiometrics, setPin, hasPin } = useAuth();
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [faceIdEnabled, setFaceIdEnabled] = useState(false);
     const [tapCount, setTapCount] = useState(0);
@@ -19,29 +19,17 @@ export default function ProfileScreen() {
 
     const handleVersionTap = () => {
         tapRef.current += 1;
-        setTapCount(tapRef.current);
+        // setTapCount(tapRef.current); // Removed state update to prevent re-render glitches
 
         if (tapRef.current >= 5) {
             // Reset
             tapRef.current = 0;
-            // Delay visual reset slightly so user sees the 5th tap? Not strict.
             setTapCount(0);
 
             if (Platform.OS === 'web') {
-                // Web specific logic - keep strictly synchronous for window.open
-                // Using a small timeout can actually HELP some web UI interactions clear, 
-                // but for window.open it's risky. Let's try direct first.
-                // Note: window.prompt blocks the thread.
-                setTimeout(() => {
-                    const password = window.prompt("Admin Tilgang - Passord:");
-                    if (password === "1234") {
-                        window.open('/admin', '_blank');
-                    } else if (password !== null) {
-                        alert("Feil passord");
-                    }
-                }, 50);
-            }
-            else if (Platform.OS === 'ios') {
+                // Open Admin in a new tab as requested
+                window.open('/admin', '_blank');
+            } else if (Platform.OS === 'ios') {
                 Alert.prompt(
                     "Admin Tilgang",
                     "Skriv inn passord",
@@ -58,7 +46,7 @@ export default function ProfileScreen() {
                     "secure-text"
                 );
             } else {
-                // Android Fallback
+                // Android
                 Alert.alert(
                     "Admin Tilgang",
                     "Hemmelig admin-meny. Skriv kode (1234).",
@@ -114,6 +102,35 @@ export default function ProfileScreen() {
         }
     };
 
+    const handleSetPin = () => {
+        if (Platform.OS === 'ios') {
+            Alert.prompt(
+                "Velg PIN-kode",
+                "Skriv inn 4 siffer",
+                [
+                    { text: "Avbryt", style: "cancel" },
+                    {
+                        text: "Lagre",
+                        onPress: (pin: string | undefined) => {
+                            if (pin && pin.length === 4 && /^\d+$/.test(pin)) {
+                                setPin(pin);
+                                Alert.alert("Suksess", "PIN-kode er lagret.");
+                            } else {
+                                Alert.alert("Feil", "PIN må være 4 siffer.");
+                            }
+                        }
+                    }
+                ],
+                "secure-text"
+            );
+        } else {
+            // Placeholder for Android until custom modal is built
+            // Or use a simple library if available. 
+            // For now, advise user.
+            Alert.alert("Beklager", "PIN-oppsett støttes foreløpig best på iOS i denne versjonen. Kontakt support for Android-løsning.");
+        }
+    };
+
     // Helper to get initials
     const getInitials = (name?: string) => {
         if (!name) return 'ON';
@@ -141,12 +158,6 @@ export default function ProfileScreen() {
                     <Body style={styles.idText}>Fødselsdato: {user?.birthdate || '12.03.1985'}</Body>
                 </View>
 
-                {/* Min Helse Section */}
-                <Section title="Min Helse">
-                    <MenuItem icon="document-text-outline" title="Journal" onPress={() => { }} />
-                    <MenuItem icon="medkit-outline" title="Resepter" onPress={() => { }} last />
-                </Section>
-
                 {/* Innstillinger Section */}
                 <Section title="Innstillinger">
                     <MenuItem
@@ -162,6 +173,11 @@ export default function ProfileScreen() {
                         isSwitch
                         switchValue={faceIdEnabled}
                         onSwitchChange={toggleFaceId}
+                    />
+                    <MenuItem
+                        icon="keypad-outline"
+                        title={hasPin ? "Endre PIN-kode" : "Opprett PIN-kode"}
+                        onPress={handleSetPin}
                         last
                     />
                 </Section>

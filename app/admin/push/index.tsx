@@ -65,6 +65,26 @@ export default function PushNotificationScreen() {
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
                 <ScrollView contentContainerStyle={styles.content}>
 
+                    {/* Live Preview */}
+                    <Text style={styles.label}>Forhåndsvisning (iOS Style)</Text>
+                    <View style={styles.previewContainer}>
+                        <View style={styles.previewCard}>
+                            <View style={styles.previewHeader}>
+                                <View style={styles.previewIcon}>
+                                    <Ionicons name="medical" size={12} color="white" />
+                                </View>
+                                <Text style={styles.previewAppName}>TM Klinikken</Text>
+                                <Text style={styles.previewTime}>Nå</Text>
+                            </View>
+                            <Text style={styles.previewTitle} numberOfLines={1}>
+                                {title || 'Din overskrift'}
+                            </Text>
+                            <Text style={styles.previewBody} numberOfLines={3}>
+                                {body || 'Din melding kommer her...'}
+                            </Text>
+                        </View>
+                    </View>
+
                     <View style={styles.infoBox}>
                         <Ionicons name="information-circle" size={24} color={Colors.primary.main} />
                         <Body style={styles.infoText}>
@@ -144,6 +164,61 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: Spacing.m,
+    },
+    // Preview Styles
+    previewContainer: {
+        alignItems: 'center',
+        marginBottom: 24,
+        paddingVertical: 10,
+    },
+    previewCard: {
+        width: '95%',
+        backgroundColor: 'rgba(255,255,255,0.9)',
+        borderRadius: 14,
+        padding: 12,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        elevation: 5,
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.05)',
+    },
+    previewHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    previewIcon: {
+        width: 20,
+        height: 20,
+        borderRadius: 5,
+        backgroundColor: Colors.primary.deep,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 8,
+    },
+    previewAppName: {
+        textTransform: 'uppercase',
+        fontSize: 11,
+        color: '#666',
+        flex: 1,
+        fontWeight: '500',
+    },
+    previewTime: {
+        fontSize: 11,
+        color: '#666',
+    },
+    previewTitle: {
+        fontSize: 15,
+        fontWeight: '600',
+        marginBottom: 2,
+        color: '#000',
+    },
+    previewBody: {
+        fontSize: 15,
+        color: '#000',
+        lineHeight: 20,
     },
     infoBox: {
         backgroundColor: '#e6f7ff',

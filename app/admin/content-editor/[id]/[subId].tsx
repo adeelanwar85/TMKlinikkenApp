@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -106,6 +106,11 @@ export default function SubTreatmentEditor() {
             } else {
                 // Update SubTreatment
                 const subIndex = updatedParent.details.subTreatments.findIndex((s: any) => s.id === subId);
+                if (subIndex === -1) {
+                    Alert.alert("Feil", "Fant ikke underbehandlingen i databasen.");
+                    return;
+                }
+
                 if (subIndex >= 0) {
                     updatedParent.details.subTreatments[subIndex] = {
                         ...updatedParent.details.subTreatments[subIndex],
@@ -118,12 +123,16 @@ export default function SubTreatmentEditor() {
                 }
             }
 
-            await ContentService.saveTreatment(updatedParent);
+            // 3. Sanitize Payload for Firestore (Removes undefined, keeps null)
+            // This is crucial because contentBlocks state might contain 'undefined' which Firestore rejects.
+            const cleanPayload = JSON.parse(JSON.stringify(updatedParent));
+
+            await ContentService.saveTreatment(cleanPayload);
             Alert.alert("Lagret", "Innholdet er oppdatert.");
             router.back();
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            Alert.alert("Feil", "Kunne ikke lagre.");
+            Alert.alert("Feil ved lagring", error.message || "Ukjent feil");
         } finally {
             setSaving(false);
         }
@@ -139,28 +148,34 @@ export default function SubTreatmentEditor() {
         const newBlock = {
             title: type === 'text' ? 'Ny Tekst' : 'Ny Liste',
             type: type,
-            content: type === 'text' ? '' : undefined,
-            listItems: type === 'list' ? [] : undefined
+            // Use null instead of undefined to be explicit (though sanitize would handle undefined)
+            content: type === 'text' ? '' : null,
+            listItems: type === 'list' ? [] : null
         };
         setContentBlocks([...contentBlocks, newBlock]);
     };
 
     const removeBlock = (index: number) => {
-        Alert.alert(
-            "Slett blokk",
-            "Er du sikker på at du vil fjerne denne blokken?",
-            [
-                { text: "Avbryt", style: "cancel" },
+        if (Platform.OS === 'web') {
+            if (window.confirm("Slette denne blokken?")) {
+                const updated = [...contentBlocks];
+                updated.splice(index, 1);
+                setContentBlocks(updated);
+            }
+        } else {
+            Alert.alert("Slette blokk?", "Er du sikker?", [
+                { text: "Avbryt", style: 'cancel' },
                 {
                     text: "Slett",
-                    style: "destructive",
+                    style: 'destructive',
                     onPress: () => {
-                        const newBlocks = contentBlocks.filter((_, i) => i !== index);
-                        setContentBlocks(newBlocks);
+                        const updated = [...contentBlocks];
+                        updated.splice(index, 1);
+                        setContentBlocks(updated);
                     }
                 }
-            ]
-        );
+            ]);
+        }
     };
 
     return (
@@ -172,7 +187,14 @@ export default function SubTreatmentEditor() {
                     </TouchableOpacity>
                     <H2 style={styles.pageTitle}>{isSection ? 'Rediger Seksjon' : 'Rediger Side'}</H2>
                     <TouchableOpacity onPress={handleSave} disabled={saving} style={styles.saveButton}>
-                        {saving ? <ActivityIndicator color="white" /> : <Ionicons name="checkmark" size={24} color="white" />}
+                        {saving ? (
+                            <ActivityIndicator color="white" />
+                        ) : (
+                            <>
+                                <Ionicons name="cloud-upload" size={18} color="white" />
+                                <Text style={styles.saveButtonText}>Lagre</Text>
+                            </>
+                        )}
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
@@ -272,6 +294,24 @@ export default function SubTreatmentEditor() {
                                 )}
                             </View>
                         ))}
+                        {/* Bottom Save Button for Visibility */}
+                        <View style={{ marginTop: 20 }}>
+                            <TouchableOpacity
+                                style={styles.mainSaveButton}
+                                onPress={handleSave}
+                                disabled={saving}
+                            >
+                                {saving ? (
+                                    <ActivityIndicator color="white" />
+                                ) : (
+                                    <>
+                                        <Ionicons name="cloud-upload-outline" size={20} color="white" />
+                                        <Text style={styles.mainSaveButtonText}>Lagre Endringer</Text>
+                                    </>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                        <View style={{ height: 40 }} />
                     </ScrollView>
                 </KeyboardAvoidingView>
             )}
@@ -284,7 +324,20 @@ const styles = StyleSheet.create({
     safeArea: { backgroundColor: Colors.background.main },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.m, paddingVertical: Spacing.s, borderBottomWidth: 1, borderBottomColor: '#eee' },
     backButton: { padding: 5 },
-    saveButton: { backgroundColor: Colors.primary.deep, width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+
+    // Updated Header Save Button
+    saveButton: {
+        backgroundColor: Colors.primary.deep,
+        flexDirection: 'row',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6
+    },
+    saveButtonText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
+
     pageTitle: { fontSize: 18, color: Colors.primary.deep },
     centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     content: { padding: Spacing.m, paddingBottom: 40 },
@@ -297,5 +350,26 @@ const styles = StyleSheet.create({
     blockHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
     blockLabel: { fontWeight: 'bold', color: Colors.primary.main },
     smallButton: { flexDirection: 'row', backgroundColor: Colors.primary.main, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, alignItems: 'center', gap: 4 },
-    smallButtonText: { color: 'white', fontSize: 12, fontWeight: 'bold' }
+    smallButtonText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
+
+    // Bottom Save Button
+    mainSaveButton: {
+        backgroundColor: Colors.primary.deep,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 12,
+        gap: 10,
+        shadowColor: Colors.primary.deep,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    mainSaveButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+    }
 });

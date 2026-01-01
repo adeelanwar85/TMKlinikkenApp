@@ -5,15 +5,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '@/src/theme/Theme';
 import { H2, H3, Body } from '@/src/theme/Typography';
+import { ADMIN_MENU } from '@/src/config/Menus';
 
+
+import { useAdminAuth } from '@/src/context/AdminAuthContext';
 
 export default function AdminScreen() {
     const router = useRouter();
-
+    const { isSuperuser, logout } = useAdminAuth();
 
     const handleBack = () => router.back();
-
-
 
     return (
         <View style={styles.container}>
@@ -23,7 +24,9 @@ export default function AdminScreen() {
                         <Ionicons name="arrow-back" size={24} color={Colors.primary.deep} />
                     </TouchableOpacity>
                     <H2 style={styles.pageTitle}>Admin Dashboard 🛠️</H2>
-                    <View style={{ width: 40 }} />
+                    <TouchableOpacity onPress={logout} style={{ padding: 8 }}>
+                        <Ionicons name="log-out-outline" size={24} color={Colors.primary.deep} />
+                    </TouchableOpacity>
                 </View>
             </SafeAreaView>
 
@@ -36,77 +39,54 @@ export default function AdminScreen() {
                 </View>
 
                 {/* Dashboard Options */}
+
+                {/* Content Section */}
                 <H3 style={styles.sectionTitle}>Innhold & Struktur</H3>
+                {ADMIN_MENU.filter(item => item.section === 'content').map(item => (
+                    <MenuCard key={item.id} item={item} onPress={() => router.push(item.route as any)} />
+                ))}
 
-                <TouchableOpacity style={styles.card} onPress={() => router.push('/admin/content-editor')} activeOpacity={0.8}>
-                    <View style={[styles.iconBox, { backgroundColor: '#E3F2FD' }]}>
-                        <Ionicons name="document-text" size={24} color="#1565C0" />
-                    </View>
-                    <View style={styles.cardContent}>
-                        <H3 style={styles.cardTitle}>Behandlingssider (CMS)</H3>
-                        <Body style={styles.cardSubtitle}>Rediger tekst, bilder og innhold</Body>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color={Colors.neutral.lightGray} />
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.card} onPress={() => router.push('/admin/campaigns')} activeOpacity={0.8}>
-                    <View style={[styles.iconBox, { backgroundColor: '#F3E5F5' }]}>
-                        <Ionicons name="megaphone" size={24} color="#7B1FA2" />
-                    </View>
-                    <View style={styles.cardContent}>
-                        <H3 style={styles.cardTitle}>Kampanjer</H3>
-                        <Body style={styles.cardSubtitle}>Administrer tilbud og nyheter</Body>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color={Colors.neutral.lightGray} />
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.card} onPress={() => router.push('/admin/employees')} activeOpacity={0.8}>
-                    <View style={[styles.iconBox, { backgroundColor: '#E0F2F1' }]}>
-                        <Ionicons name="people" size={24} color="#00796B" />
-                    </View>
-                    <View style={styles.cardContent}>
-                        <H3 style={styles.cardTitle}>Ansatte</H3>
-                        <Body style={styles.cardSubtitle}>Rediger team-oversikten</Body>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color={Colors.neutral.lightGray} />
-                </TouchableOpacity>
-
+                {/* Operations Section */}
                 <H3 style={styles.sectionTitle}>Drift & Kommunikasjon</H3>
+                {ADMIN_MENU.filter(item => item.section === 'operations').map(item => (
+                    <MenuCard key={item.id} item={item} onPress={() => router.push(item.route as any)} />
+                ))}
 
-                <TouchableOpacity style={styles.card} onPress={() => router.push('/admin/notifications')} activeOpacity={0.8}>
-                    <View style={[styles.iconBox, { backgroundColor: '#E8F5E9' }]}>
-                        <Ionicons name="notifications" size={24} color="#2E7D32" />
-                    </View>
-                    <View style={styles.cardContent}>
-                        <H3 style={styles.cardTitle}>Push-varsel</H3>
-                        <Body style={styles.cardSubtitle}>Send melding til alle kunder</Body>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color={Colors.neutral.lightGray} />
-                </TouchableOpacity>
+                {/* System Section (Superuser) */}
+                {isSuperuser && (
+                    <>
+                        <H3 style={styles.sectionTitle}>System & Tilgang</H3>
+                        {ADMIN_MENU.filter(item => item.section === 'system').map(item => (
+                            <MenuCard key={item.id} item={item} onPress={() => router.push(item.route as any)} />
+                        ))}
 
-                <TouchableOpacity style={styles.card} onPress={() => router.push('/admin/config')} activeOpacity={0.8}>
-                    <View style={[styles.iconBox, { backgroundColor: '#FFEBEE' }]}>
-                        <Ionicons name="settings" size={24} color="#C62828" />
-                    </View>
-                    <View style={styles.cardContent}>
-                        <H3 style={styles.cardTitle}>Drift & Info</H3>
-                        <Body style={styles.cardSubtitle}>Åpningstider, nød-banner m.m.</Body>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color={Colors.neutral.lightGray} />
-                </TouchableOpacity>
-
-                <View style={{ marginTop: 40, alignItems: 'center' }}>
-                    <TouchableOpacity onPress={() => router.push('/admin/seed')} style={{ padding: 10 }}>
-                        <Body style={{ color: Colors.neutral.darkGray, fontSize: 12, opacity: 0.5 }}>
-                            Database-verktøy (Klikk for å laste opp standardinnhold)
-                        </Body>
-                    </TouchableOpacity>
-                </View>
-
-
+                        <View style={{ marginTop: 20, alignItems: 'center' }}>
+                            <TouchableOpacity onPress={() => router.push('/admin/seed')} style={{ padding: 10 }}>
+                                <Body style={{ color: Colors.neutral.darkGray, fontSize: 12, opacity: 0.5 }}>
+                                    Database-verktøy (Seeding)
+                                </Body>
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                )}
 
             </ScrollView>
         </View>
+    );
+}
+
+function MenuCard({ item, onPress }: { item: any, onPress: () => void }) {
+    return (
+        <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
+            <View style={[styles.iconBox, { backgroundColor: item.bg }]}>
+                <Ionicons name={item.icon} size={24} color={item.color} />
+            </View>
+            <View style={styles.cardContent}>
+                <H3 style={styles.cardTitle}>{item.title}</H3>
+                <Body style={styles.cardSubtitle}>{item.subtitle}</Body>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={Colors.neutral.lightGray} />
+        </TouchableOpacity>
     );
 }
 

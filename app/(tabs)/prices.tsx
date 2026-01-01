@@ -82,12 +82,9 @@ export default function PricesScreen() {
         const query = queryToUse.toLowerCase().trim();
 
         return dataToFilter.map(category => {
-            // 1. Check if category title or keywords match
-            const categoryMatch =
-                category.title.toLowerCase().includes(query) ||
-                category.keywords?.some(k => k.toLowerCase().includes(query));
+            // 1. Check if category title matches (Strictly title, not keywords, to avoid "Filler" -> "Injeksjoner" -> All)
+            const categoryTitleMatch = category.title.toLowerCase().includes(query);
 
-            // Check items matches
             const matchingItems = category.items.map(sub => {
                 // 2. Check subcategory title or keywords
                 const subMatch =
@@ -97,20 +94,26 @@ export default function PricesScreen() {
                 // 3. Filter distinct data items
                 const matchingData = sub.data.filter(item =>
                     item.name.toLowerCase().includes(query) ||
-                    item.description?.toLowerCase().includes(query) ||
-                    (categoryMatch || subMatch)
+                    item.description?.toLowerCase().includes(query)
                 );
 
+                // If sub-category title/keyword matches, return the whole sub-category
                 if (subMatch) {
                     return sub;
                 }
 
+                // If specific data items match, return sub-category with ONLY those items
                 if (matchingData.length > 0) return { ...sub, data: matchingData };
+
                 return null;
             }).filter(Boolean);
 
+            // If we found specific matching items/sub-cats, return category with filtered content
             if (matchingItems.length > 0) return { ...category, items: matchingItems };
-            if (categoryMatch) return category;
+
+            // Fallback: If ONLY the category title matches (e.g. "Injeksjoner"), show everything
+            // This ensures searching "Injeksjoner" still lists all injections.
+            if (categoryTitleMatch) return category;
 
             return null;
         }).filter(Boolean) as PriceCategory[];

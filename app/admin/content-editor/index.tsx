@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '@/src/theme/Theme';
@@ -12,9 +13,11 @@ export default function ContentEditorList() {
     const [treatments, setTreatments] = useState<treatmentMenuItem[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        loadTreatments();
-    }, []);
+    useFocusEffect(
+        React.useCallback(() => {
+            loadTreatments();
+        }, [])
+    );
 
     const loadTreatments = async () => {
         setLoading(true);

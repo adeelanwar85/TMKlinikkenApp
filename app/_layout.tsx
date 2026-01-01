@@ -1,4 +1,4 @@
-import { AuthProvider } from '@/src/context/AuthContext';
+import { AuthProvider, useAuth } from '@/src/context/AuthContext';
 import { ActionSheetProvider } from '@expo/react-native-action-sheet';
 import { Stack } from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
@@ -9,8 +9,25 @@ import { NotificationService } from '@/src/services/NotificationService';
 import { ContentService, BroadcastMessage } from '@/src/services/ContentService';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import LockScreen from '@/src/components/LockScreen';
 
 const LAST_NOTIF_KEY = 'last_seen_notification_time';
+
+function AuthorizedLayout() {
+    const { isLocked } = useAuth();
+
+    if (isLocked) {
+        return <LockScreen />;
+    }
+
+    return (
+        <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="login" />
+            <Stack.Screen name="(tabs)" />
+        </Stack>
+    );
+}
 
 export default function RootLayout() {
     const notificationListener = useRef<any>();
@@ -65,11 +82,7 @@ export default function RootLayout() {
                 <>
                     <AuthProvider>
                         <BookingProvider>
-                            <Stack screenOptions={{ headerShown: false }}>
-                                <Stack.Screen name="index" />
-                                <Stack.Screen name="login" />
-                                <Stack.Screen name="(tabs)" />
-                            </Stack>
+                            <AuthorizedLayout />
                         </BookingProvider>
                     </AuthProvider>
                     <StatusBar style="auto" />
