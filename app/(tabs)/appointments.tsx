@@ -76,13 +76,13 @@ export default function AppointmentsScreen() {
             </View>
 
             <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.cancelButton}>
-                    <Ionicons name="close-circle-outline" size={16} color="#D32F2F" />
-                    <Body style={styles.cancelText}>Avbestill</Body>
-                </TouchableOpacity>
                 <TouchableOpacity style={styles.rescheduleButton}>
                     <Ionicons name="calendar" size={16} color="white" />
                     <Body style={styles.rescheduleText}>Endre time</Body>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.cancelButton}>
+                    <Ionicons name="close-circle-outline" size={16} color="#D32F2F" />
+                    <Body style={styles.cancelText}>Avbestill</Body>
                 </TouchableOpacity>
             </View>
         </View>
@@ -224,6 +224,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         padding: Spacing.s,
+        marginLeft: Spacing.m,
     },
     cancelText: {
         color: '#D32F2F',
@@ -239,7 +240,6 @@ const styles = StyleSheet.create({
         padding: Spacing.s,
         backgroundColor: Colors.primary.main,
         borderRadius: 8,
-        marginLeft: Spacing.m,
     },
     rescheduleText: {
         color: 'white',

@@ -49,6 +49,10 @@ export default function SummaryScreen() {
                     lastName: user.name.split(' ').slice(1).join(' ') || '',
                     email: user.email,
                     phone: user.phone,
+                    dob: user.birthdate,
+                    address: user.address,
+                    postcode: user.postcode,
+                    city: user.city,
                     comment: ''
                 }
             });

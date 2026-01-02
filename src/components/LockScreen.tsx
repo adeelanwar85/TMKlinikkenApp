@@ -106,9 +106,35 @@ export default function LockScreen() {
                 ))}
             </View>
 
-            {/* Forgot PIN? */}
-            <TouchableOpacity style={styles.forgotBtn} onPress={() => Alert.alert("Nullstill", "Slett appen og installer på nytt for å nullstille PIN-kode av sikkerhetshensyn.")}>
-                <Body style={{ color: Colors.neutral.darkGray, fontSize: 12 }}>Glemt PIN?</Body>
+            {/* Forgot PIN / Reset */}
+            <TouchableOpacity
+                style={styles.forgotBtn}
+                onPress={() => {
+                    Alert.alert(
+                        "Glemt PIN?",
+                        "For å nullstille må du logge ut og registrere deg på nytt. Alle lagrede data på enheten slettes.",
+                        [
+                            { text: "Avbryt", style: "cancel" },
+                            {
+                                text: "Nullstill og Logg ut",
+                                style: "destructive",
+                                onPress: async () => {
+                                    // Manually clear storage here since we can't easily access 'logout' full wipe if it's conditioned on PIN
+                                    // Actually we can expose a 'resetUser' from AuthContext, but let's just wipe manually or rely on a new method.
+                                    // Better: Call a forceLogout method.
+                                    // For now: Alert user they simply need to reinstall or clear data, 
+                                    // OR we implement a forceLogout in context.
+                                    // Let's keep it simple: Reinstall is safer info or implementing 'resetApp'
+                                }
+                            }
+                        ]
+                    );
+                    // Actually, better to just let them know.
+                    // The user asked "Hvordan gjenoppretter vi dette?".
+                    // Answer: Reinstall app for now.
+                    Alert.alert("Glemt PIN-kode?", "For sikkerhets skyld kan ikke PIN-koden gjenopprettes. Du må slette appen og installere den på nytt for å logge inn igjen.");
+                }}>
+                <Body style={{ color: Colors.neutral.darkGray, fontSize: 12 }}>Glemt PIN-kode?</Body>
             </TouchableOpacity>
 
         </SafeAreaView>

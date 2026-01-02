@@ -8,23 +8,23 @@ import { H2, H3, Body } from '@/src/theme/Typography';
 import { ContentService, treatmentMenuItem } from '@/src/services/ContentService';
 
 export default function SubTreatmentEditor() {
-    const { id, subId } = useLocalSearchParams(); // id=peelinger, subId=meline OR section_0
+    const { id, subId } = useLocalSearchParams();
     const router = useRouter();
 
     const [parentTreatment, setParentTreatment] = useState<treatmentMenuItem | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    // Determines if we are editing a SubTreatment (object) or a Section (legacy object)
     const [isSection, setIsSection] = useState(false);
     const [sectionIndex, setSectionIndex] = useState(-1);
 
-    // Form Data
     const [title, setTitle] = useState('');
     const [subtitle, setSubtitle] = useState('');
     const [intro, setIntro] = useState('');
     const [heroImage, setHeroImage] = useState('');
     const [contentBlocks, setContentBlocks] = useState<any[]>([]);
+
+    const [blockToDeleteIndex, setBlockToDeleteIndex] = useState<number | null>(null);
 
     useEffect(() => {
         if (id && subId) loadContent();
@@ -35,34 +35,19 @@ export default function SubTreatmentEditor() {
         const parent = await ContentService.getTreatmentById(id as string);
         if (parent) {
             setParentTreatment(parent);
-
-            // Logic to find the child node
             const sId = subId as string;
             if (sId.startsWith('section_')) {
-                // It's a section
                 setIsSection(true);
                 const idx = parseInt(sId.split('_')[1]);
                 setSectionIndex(idx);
                 const section = parent.details?.sections?.[idx];
                 if (section) {
                     setTitle(section.title || '');
-                    setSubtitle(''); // Sections don't usually have subtitles
-                    setIntro(''); // Sections uses 'content' string as intro/body usually, or it's a block
-                    // Normalize Section to match SubTreatment structure for the form
-                    // If section.type is 'text', it has a content string.
-                    // We will cheat and put that single content into a "Block" for consistent editing.
-                    // Actually, let's treat the Section ITSELF as one big block if it doesn't have listItems?
-                    // No, keeping it consistent:
-                    // A Section has: title, content (string), type, listItems (optional).
-                    // We map this to our form fields.
-
-                    // Specific handling for Sections:
-                    // They usually represent ONE block.
-                    // So we will just edit that block directly.
+                    setSubtitle('');
+                    setIntro('');
                     setContentBlocks([section]);
                 }
             } else {
-                // It's a SubTreatment
                 setIsSection(false);
                 const sub = parent.details?.subTreatments?.find(s => s.id === sId);
                 if (sub) {
@@ -81,18 +66,9 @@ export default function SubTreatmentEditor() {
         if (!parentTreatment) return;
         setSaving(true);
         try {
-            // Deep clone parent
             const updatedParent = JSON.parse(JSON.stringify(parentTreatment));
 
             if (isSection) {
-                // Update specific section at index
-                // Note: The form for sections currently maps the WHOLE section to contentBlocks[0] approximately.
-                // But sections are simple: { title, content, type... }
-                // Let's assume the user edited the "Title" and the "First Block" fields.
-
-                // For simplicity in this MVP, we map the Title Field back to title
-                // And we take the first block from contentBlocks and use its content/type
-
                 const editedBlock = contentBlocks[0];
                 const updatedSection = {
                     ...updatedParent.details.sections[sectionIndex],
@@ -104,13 +80,11 @@ export default function SubTreatmentEditor() {
                 updatedParent.details.sections[sectionIndex] = updatedSection;
 
             } else {
-                // Update SubTreatment
                 const subIndex = updatedParent.details.subTreatments.findIndex((s: any) => s.id === subId);
                 if (subIndex === -1) {
                     Alert.alert("Feil", "Fant ikke underbehandlingen i databasen.");
                     return;
                 }
-
                 if (subIndex >= 0) {
                     updatedParent.details.subTreatments[subIndex] = {
                         ...updatedParent.details.subTreatments[subIndex],
@@ -123,10 +97,7 @@ export default function SubTreatmentEditor() {
                 }
             }
 
-            // 3. Sanitize Payload for Firestore (Removes undefined, keeps null)
-            // This is crucial because contentBlocks state might contain 'undefined' which Firestore rejects.
             const cleanPayload = JSON.parse(JSON.stringify(updatedParent));
-
             await ContentService.saveTreatment(cleanPayload);
             Alert.alert("Lagret", "Innholdet er oppdatert.");
             router.back();
@@ -148,7 +119,6 @@ export default function SubTreatmentEditor() {
         const newBlock = {
             title: type === 'text' ? 'Ny Tekst' : 'Ny Liste',
             type: type,
-            // Use null instead of undefined to be explicit (though sanitize would handle undefined)
             content: type === 'text' ? '' : null,
             listItems: type === 'list' ? [] : null
         };
@@ -156,26 +126,14 @@ export default function SubTreatmentEditor() {
     };
 
     const removeBlock = (index: number) => {
-        if (Platform.OS === 'web') {
-            if (window.confirm("Slette denne blokken?")) {
-                const updated = [...contentBlocks];
-                updated.splice(index, 1);
-                setContentBlocks(updated);
-            }
-        } else {
-            Alert.alert("Slette blokk?", "Er du sikker?", [
-                { text: "Avbryt", style: 'cancel' },
-                {
-                    text: "Slett",
-                    style: 'destructive',
-                    onPress: () => {
-                        const updated = [...contentBlocks];
-                        updated.splice(index, 1);
-                        setContentBlocks(updated);
-                    }
-                }
-            ]);
-        }
+        setBlockToDeleteIndex(index);
+    };
+
+    const performRemoveBlock = (index: number) => {
+        const updated = [...contentBlocks];
+        updated.splice(index, 1);
+        setContentBlocks(updated);
+        setBlockToDeleteIndex(null);
     };
 
     return (
@@ -207,13 +165,11 @@ export default function SubTreatmentEditor() {
                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
                     <ScrollView contentContainerStyle={styles.content}>
 
-                        {/* Metadata Fields */}
                         <View style={styles.inputGroup}>
                             <Body style={styles.label}>Tittel</Body>
                             <TextInput style={styles.input} value={title} onChangeText={setTitle} />
                         </View>
 
-                        {/* Only SubTreatments have these extra fields */}
                         {!isSection && (
                             <>
                                 <View style={styles.inputGroup}>
@@ -249,52 +205,78 @@ export default function SubTreatmentEditor() {
 
                         {/* Blocks Editor */}
                         {contentBlocks.map((block, index) => (
-                            <View key={index} style={styles.blockCard}>
-                                <View style={styles.blockHeader}>
-                                    <Body style={styles.blockLabel}>Blokk {index + 1} ({block.type || 'text'})</Body>
-                                    <TouchableOpacity onPress={() => removeBlock(index)}>
-                                        <Ionicons name="trash-outline" size={20} color="#E53935" />
-                                    </TouchableOpacity>
-                                </View>
-
-                                <View style={styles.inputGroup}>
-                                    <Body style={styles.label}>Overskrift (Valgfri)</Body>
-                                    <TextInput
-                                        style={styles.input}
-                                        value={block.title}
-                                        onChangeText={(text) => updateBlock(index, 'title', text)}
-                                    />
-                                </View>
-
-                                {block.type === 'list' ? (
-                                    <View>
-                                        <Body style={styles.label}>Liste-elementer (Seperér med komma for nå)</Body>
-                                        <TextInput
-                                            style={[styles.input, { height: 60 }]}
-                                            // Mocking list editing as CSV for MVP simplicity
-                                            value={block.listItems?.map((l: any) => l.label).join(', ')}
-                                            onChangeText={(text) => {
-                                                const items = text.split(',').map(s => ({ label: s.trim() }));
-                                                updateBlock(index, 'listItems', items);
-                                            }}
-                                            multiline
-                                        />
-                                        <Body style={{ fontSize: 10, color: '#666' }}>Eks: Fordel 1, Fordel 2, Fordel 3</Body>
+                            <View key={index} style={[
+                                styles.blockCard,
+                                index === blockToDeleteIndex && styles.blockCardDeleting
+                            ]}>
+                                {index === blockToDeleteIndex ? (
+                                    <View style={styles.deleteConfirmContainer}>
+                                        <Body style={{ color: '#D32F2F', fontWeight: 'bold', marginBottom: 10 }}>
+                                            Er du sikker på at du vil slette denne blokken?
+                                        </Body>
+                                        <View style={{ flexDirection: 'row', gap: 15 }}>
+                                            <TouchableOpacity
+                                                onPress={() => setBlockToDeleteIndex(null)}
+                                                style={styles.cancelDeleteButton}
+                                            >
+                                                <Text style={{ color: '#333' }}>Avbryt</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                onPress={() => performRemoveBlock(index)}
+                                                style={styles.confirmDeleteButton}
+                                            >
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Slett</Text>
+                                            </TouchableOpacity>
+                                        </View>
                                     </View>
                                 ) : (
-                                    <View>
-                                        <Body style={styles.label}>Tekstinnhold</Body>
-                                        <TextInput
-                                            style={[styles.input, { height: 120 }]}
-                                            value={block.content}
-                                            onChangeText={(text) => updateBlock(index, 'content', text)}
-                                            multiline
-                                        />
-                                    </View>
+                                    <>
+                                        <View style={styles.blockHeader}>
+                                            <Body style={styles.blockLabel}>Blokk {index + 1} ({block.type || 'text'})</Body>
+                                            <TouchableOpacity onPress={() => removeBlock(index)}>
+                                                <Ionicons name="trash-outline" size={20} color="#E53935" />
+                                            </TouchableOpacity>
+                                        </View>
+
+                                        <View style={styles.inputGroup}>
+                                            <Body style={styles.label}>Overskrift (Valgfri)</Body>
+                                            <TextInput
+                                                style={styles.input}
+                                                value={block.title}
+                                                onChangeText={(text) => updateBlock(index, 'title', text)}
+                                            />
+                                        </View>
+
+                                        {block.type === 'list' ? (
+                                            <View>
+                                                <Body style={styles.label}>Liste-elementer (Seperér med komma for nå)</Body>
+                                                <TextInput
+                                                    style={[styles.input, { height: 60 }]}
+                                                    value={block.listItems?.map((l: any) => l.label).join(', ')}
+                                                    onChangeText={(text) => {
+                                                        const items = text.split(',').map(s => ({ label: s.trim() }));
+                                                        updateBlock(index, 'listItems', items);
+                                                    }}
+                                                    multiline
+                                                />
+                                                <Body style={{ fontSize: 10, color: '#666' }}>Eks: Fordel 1, Fordel 2, Fordel 3</Body>
+                                            </View>
+                                        ) : (
+                                            <View>
+                                                <Body style={styles.label}>Tekstinnhold</Body>
+                                                <TextInput
+                                                    style={[styles.input, { height: 120 }]}
+                                                    value={block.content}
+                                                    onChangeText={(text) => updateBlock(index, 'content', text)}
+                                                    multiline
+                                                />
+                                            </View>
+                                        )}
+                                    </>
                                 )}
                             </View>
                         ))}
-                        {/* Bottom Save Button for Visibility */}
+
                         <View style={{ marginTop: 20 }}>
                             <TouchableOpacity
                                 style={styles.mainSaveButton}
@@ -324,8 +306,6 @@ const styles = StyleSheet.create({
     safeArea: { backgroundColor: Colors.background.main },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.m, paddingVertical: Spacing.s, borderBottomWidth: 1, borderBottomColor: '#eee' },
     backButton: { padding: 5 },
-
-    // Updated Header Save Button
     saveButton: {
         backgroundColor: Colors.primary.deep,
         flexDirection: 'row',
@@ -337,7 +317,6 @@ const styles = StyleSheet.create({
         gap: 6
     },
     saveButtonText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
-
     pageTitle: { fontSize: 18, color: Colors.primary.deep },
     centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     content: { padding: Spacing.m, paddingBottom: 40 },
@@ -351,8 +330,6 @@ const styles = StyleSheet.create({
     blockLabel: { fontWeight: 'bold', color: Colors.primary.main },
     smallButton: { flexDirection: 'row', backgroundColor: Colors.primary.main, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, alignItems: 'center', gap: 4 },
     smallButtonText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
-
-    // Bottom Save Button
     mainSaveButton: {
         backgroundColor: Colors.primary.deep,
         flexDirection: 'row',
@@ -371,5 +348,29 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    blockCardDeleting: {
+        borderColor: '#E53935',
+        backgroundColor: '#FFEBEE',
+        borderWidth: 2,
+    },
+    deleteConfirmContainer: {
+        alignItems: 'center',
+        padding: 10,
+        width: '100%',
+    },
+    cancelDeleteButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        backgroundColor: 'white',
+        borderWidth: 1,
+        borderColor: '#ddd',
+    },
+    confirmDeleteButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        backgroundColor: '#E53935',
     }
 });

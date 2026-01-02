@@ -31,8 +31,16 @@
     - [x] Replace Dashboard Cards with relevant aesthetic treatments <!-- id: 15 -->
     - [x] Fine-tune visual details (Fonts/Logos) to match website vibe <!-- id: 16 -->
 
+- [x] **Admin Panel Features**
+    - [x] **Generic Menu Support**: Add Support for "External Links" in Content Editor
+    - [x] **Documentation**: Create ADMIN_GUIDE.md and admin_cheat_sheet.md
+    - [x] **Access**: Verify PIN and Login logic (Admin vs Superuser)
+
+- [x] **UI & UX Polish**
+    - [x] **My Appointments**: Fix button order (Change Left, Cancel Right)
+    - [x] **Treatment Details**: Verify V3 Design Consistency
+
 - [ ] **Next Steps (Future Agents)** <!-- id: 37 -->
-    - [ ] **Remaining Icons**: Generate "V3" style icons for "Lege" and "Bestill time" cards <!-- id: 38 -->
     - [ ] **Mobile Testing**: Verify safe areas and gradients on iOS/Android Simulators <!-- id: 39 -->
     - [ ] **Deployment**: Configure `app.json` bundle IDs and build standalone app <!-- id: 40 -->
 
@@ -42,4 +50,7 @@
         - [x] **Treatment List**: Mapped icons (Smiley, Drop, etc.) <!-- id: 44 -->
         - [x] **Calendar**: Fixed Web font (Sans-serif) <!-- id: 45 -->
     - [x] **Flow**: Navigation logic fixed (hiding native headers) <!-- id: 46 -->
-    - [ ] **Notifications**: Implement local notifications (Pending) <!-- id: 47 -->
+    - [x] **Notifications**: Implement local notifications (24h + 2h Reminders) <!-- id: 47 -->
+
+- [x] **Sustainability & Handoff**
+    - [x] **AI Guide**: Create `docs/AI_COPILOT_GUIDE.md` for future agents

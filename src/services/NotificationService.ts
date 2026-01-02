@@ -143,20 +143,62 @@ export const NotificationService = {
     /**
      * Schedule a notification 24 hours before the appointment
      */
+    /**
+     * Schedule notifications: 24h before and 2h before
+     */
     async scheduleAppointmentReminder(appointmentDate: Date, treatmentName: string) {
-        if (Platform.OS === 'web') return;
-        const triggerDate = new Date(appointmentDate.getTime() - 24 * 60 * 60 * 1000);
+        if (Platform.OS === 'web') {
+            console.log(`[Web Simulator] Scheduling reminders for ${treatmentName} at ${appointmentDate}`);
+            console.log(`[Web Simulator] 1. Reminder set for: ${new Date(appointmentDate.getTime() - 24 * 60 * 60 * 1000)}`);
+            console.log(`[Web Simulator] 2. Reminder set for: ${new Date(appointmentDate.getTime() - 2 * 60 * 60 * 1000)}`);
+            return;
+        }
 
-        if (triggerDate.getTime() < Date.now()) return;
+        // 1. 24 Hours Before
+        const trigger24h = new Date(appointmentDate.getTime() - 24 * 60 * 60 * 1000);
+        if (trigger24h.getTime() > Date.now()) {
+            await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: "📅 Husk time i morgen",
+                    body: `Du har time for ${treatmentName} i morgen kl. ${appointmentDate.getHours().toString().padStart(2, '0')}:${appointmentDate.getMinutes().toString().padStart(2, '0')}. Velkommen!`,
+                    data: { appointmentDate, type: 'reminder_24h' },
+                    sound: true,
+                },
+                trigger: { type: SchedulableTriggerInputTypes.DATE, date: trigger24h },
+            });
+        }
+
+        // 2. 2 Hours Before
+        const trigger2h = new Date(appointmentDate.getTime() - 2 * 60 * 60 * 1000);
+        if (trigger2h.getTime() > Date.now()) {
+            await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: "⏳ Time snart",
+                    body: `Det er ca. 2 timer til din behandling (${treatmentName}). Vi gleder oss til å se deg!`,
+                    data: { appointmentDate, type: 'reminder_2h' },
+                    sound: true,
+                },
+                trigger: { type: SchedulableTriggerInputTypes.DATE, date: trigger2h },
+            });
+        }
+    },
+
+    /**
+     * Send an immediate test notification
+     */
+    async sendTestNotification() {
+        if (Platform.OS === 'web') {
+            window.alert("🔔 [Web Simulering]\nDette er en testvarsling!\nPå mobil ville denne dukket opp i varslingssenteret.");
+            return;
+        }
 
         await Notifications.scheduleNotificationAsync({
             content: {
-                title: "📅 Påminnelse: Time i morgen",
-                body: `Du har time for ${treatmentName} hos TM Klinikken kl. ${appointmentDate.getHours()}:${appointmentDate.getMinutes().toString().padStart(2, '0')}.`,
-                data: { appointmentDate },
+                title: "🔔 Test Varsling",
+                body: "Dette er en testvarsling fra TM Klinikken Admin-panel.",
                 sound: true,
             },
-            trigger: { type: SchedulableTriggerInputTypes.DATE, date: triggerDate },
+            trigger: null, // Immediate
         });
     },
 

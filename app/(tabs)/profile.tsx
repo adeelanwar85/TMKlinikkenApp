@@ -123,11 +123,19 @@ export default function ProfileScreen() {
                 ],
                 "secure-text"
             );
+        } else if (Platform.OS === 'web') {
+            const pin = window.prompt("Velg PIN-kode (4 siffer):");
+            if (pin) {
+                if (pin.length === 4 && /^\d+$/.test(pin)) {
+                    setPin(pin);
+                    alert("PIN-kode lagret.");
+                } else {
+                    alert("PIN må være 4 siffer.");
+                }
+            }
         } else {
             // Placeholder for Android until custom modal is built
-            // Or use a simple library if available. 
-            // For now, advise user.
-            Alert.alert("Beklager", "PIN-oppsett støttes foreløpig best på iOS i denne versjonen. Kontakt support for Android-løsning.");
+            Alert.alert("Beklager", "PIN-oppsett støttes foreløpig best på iOS (og Web).");
         }
     };
 

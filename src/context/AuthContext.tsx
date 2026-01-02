@@ -9,6 +9,9 @@ type UserProfile = {
     phone: string;
     email: string;
     birthdate: string;
+    address?: string; // Optional
+    postcode?: string; // Optional
+    city?: string; // Optional
 };
 
 type AuthContextType = {
@@ -44,7 +47,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const checkBiometricSupport = async () => {
         if (Platform.OS === 'web') {
-            setHasBiometrics(true);
+            setHasBiometrics(false); // Web usually doesn't simulate this well for "Login form", keep simpler
             return;
         }
         const compatible = await LocalAuthentication.hasHardwareAsync();
@@ -53,13 +56,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const checkPinStatus = async () => {
-        if (Platform.OS === 'web') return; // Skip secure store on web for now
-        const pin = await SecureStore.getItemAsync('user_pin');
-        if (pin) {
-            setHasPin(true);
-            setIsLocked(true); // Lock immediately if PIN exists
-            // Try Biometrics auto-unlock
-            attemptBiometricUnlock();
+        if (Platform.OS === 'web') return;
+        try {
+            const pin = await SecureStore.getItemAsync('user_pin');
+            if (pin) {
+                setHasPin(true);
+                // We do NOT lock immediately on simple app open unless we want strict security.
+                // For a "Doctors App", maybe yes? 
+                // Let's stick to: If previously logged in (user exists) AND PIN exists -> Lock.
+                // isLocked default is false. 
+                // We'll set isLocked = true inside loadUser if we find a user + pin?
+            }
+        } catch (e) {
+            console.log("SecureStore Error", e);
         }
     };
 
@@ -81,9 +90,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const storedUser = await AsyncStorage.getItem('user_profile');
             if (storedUser) {
                 setUser(JSON.parse(storedUser));
-                // Only set authenticated if NOT locked? 
-                // Currently isAuthenticated just means "Profile Exists". 
-                // isLocked prevents access.
+
+                // Check if we should lock
+                let pin;
+                if (Platform.OS === 'web') {
+                    pin = await AsyncStorage.getItem('user_pin');
+                } else {
+                    pin = await SecureStore.getItemAsync('user_pin');
+                }
+
+                if (pin) {
+                    setHasPin(true);
+                    setIsLocked(true); // Lock on cold start if PIN exists
+                    attemptBiometricUnlock();
+                }
+
                 setIsAuthenticated(true);
             }
         } catch (error) {
@@ -108,9 +129,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const logout = async () => {
+        if (hasPin) {
+            // Lock instead of wiping data
+            setIsLocked(true);
+            return;
+        }
+
+        // Full wipe if no PIN protection
         try {
             await AsyncStorage.removeItem('user_profile');
-            // Optionally clear PIN on logout? Or keep it? keeping it for now.
             setUser(null);
             setIsAuthenticated(false);
             setIsLocked(false);
@@ -142,17 +169,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // PIN Methods
     const setPin = async (pin: string) => {
         if (Platform.OS === 'web') {
-            alert("PIN-kode støttes ikke i nettleser ennå.");
-            return;
+            await AsyncStorage.setItem('user_pin', pin);
+        } else {
+            await SecureStore.setItemAsync('user_pin', pin);
         }
-        await SecureStore.setItemAsync('user_pin', pin);
         setHasPin(true);
-        // Ask to enable biometrics as well?
     };
 
     const verifyPin = async (inputPin: string) => {
-        if (Platform.OS === 'web') return true;
-        const storedPin = await SecureStore.getItemAsync('user_pin');
+        let storedPin;
+        if (Platform.OS === 'web') {
+            storedPin = await AsyncStorage.getItem('user_pin');
+        } else {
+            storedPin = await SecureStore.getItemAsync('user_pin');
+        }
         return storedPin === inputPin;
     };
 

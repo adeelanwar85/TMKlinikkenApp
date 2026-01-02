@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing } from '@/src/theme/Theme';
 import { H2, H3, Body } from '@/src/theme/Typography';
 import { ContentService, BroadcastMessage } from '@/src/services/ContentService';
+import { NotificationService } from '@/src/services/NotificationService';
 
 export default function NotificationsAdmin() {
     const router = useRouter();
@@ -78,6 +79,20 @@ export default function NotificationsAdmin() {
                         <Body style={{ flex: 1, marginLeft: 10, fontSize: 13, color: Colors.primary.deep }}>
                             Simulert Push: Dette sender en melding via databasen som apper lytter til. Fungerer mens appen er åpen.
                         </Body>
+                    </View>
+
+                    {/* Local Test Button */}
+                    <View style={styles.testBox}>
+                        <View style={{ flex: 1 }}>
+                            <H3 style={{ fontSize: 16 }}>Test Lokal Varsling</H3>
+                            <Body style={{ fontSize: 12, color: '#666' }}>Sjekk om varslinger virker på din enhet.</Body>
+                        </View>
+                        <TouchableOpacity
+                            style={styles.testButton}
+                            onPress={() => NotificationService.sendTestNotification()}
+                        >
+                            <Text style={styles.testButtonText}>Test Nå</Text>
+                        </TouchableOpacity>
                     </View>
 
                     <H3 style={styles.sectionTitle}>Ny Melding</H3>
@@ -185,6 +200,28 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         alignItems: 'center',
         marginBottom: Spacing.l,
+    },
+    testBox: {
+        flexDirection: 'row',
+        backgroundColor: Colors.neutral.white,
+        padding: Spacing.m,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginBottom: Spacing.l,
+        borderWidth: 1,
+        borderColor: '#eee',
+        justifyContent: 'space-between',
+    },
+    testButton: {
+        backgroundColor: Colors.neutral.charcoal,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+    },
+    testButtonText: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: 'bold',
     },
     inputGroup: { marginBottom: Spacing.m },
     label: { fontSize: 14, color: Colors.neutral.darkGray, marginBottom: 6, fontWeight: '600' },

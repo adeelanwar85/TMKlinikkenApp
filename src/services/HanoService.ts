@@ -30,6 +30,11 @@ export interface CreateBookingPayload {
         lastName: string;
         email: string;
         phone: string;
+        dob?: string;
+        dob?: string;
+        address?: string;
+        postcode?: string;
+        city?: string;
         comment?: string;
     };
 }
@@ -295,6 +300,10 @@ export const HanoService = {
                     LastName: payload.customer.lastName,
                     Email: payload.customer.email,
                     Mobile: payload.customer.phone,
+                    DateOfBirth: payload.customer.dob,
+                    Address1: payload.customer.address,
+                    PostalCode: payload.customer.postcode,
+                    City: payload.customer.city,
                 },
                 Comment: payload.customer.comment
             };

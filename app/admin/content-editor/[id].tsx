@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ export default function TreatmentEditor() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
+    const [subToDeleteId, setSubToDeleteId] = useState<string | null>(null);
 
     // Form State
     const [title, setTitle] = useState('');
@@ -22,6 +23,10 @@ export default function TreatmentEditor() {
     // New Fields for Dashboard Card
     const [image, setImage] = useState('');
     const [icon, setIcon] = useState('');
+    // Type Toggle
+    const [type, setType] = useState<'page' | 'link'>('page');
+    // Link Field
+    const [externalUrl, setExternalUrl] = useState('');
 
     useFocusEffect(
         React.useCallback(() => {
@@ -39,6 +44,14 @@ export default function TreatmentEditor() {
             setHeroImage(data.details?.heroImage || '');
             setImage(data.image || '');
             setIcon(data.icon || '');
+            setExternalUrl(data.url || '');
+
+            // Determine type
+            if (!data.details && data.url) {
+                setType('link');
+            } else {
+                setType('page');
+            }
         } else {
             Alert.alert("Feil", "Fant ikke behandlingen.");
             router.back();
@@ -50,17 +63,25 @@ export default function TreatmentEditor() {
         if (!treatment) return;
         setSaving(true);
         try {
-            const updated = {
+            const updated: treatmentMenuItem = {
                 ...treatment,
                 title,
                 subtitle,
-                image, // Dashboard Image URL
-                icon,  // Ionicons Name
-                details: {
+                image,
+                icon,
+                url: type === 'link' ? externalUrl : '', // Clear URL if page? Or keep as fallback? Keep safe.
+                details: type === 'link' ? undefined : {
                     ...treatment.details,
-                    heroImage: heroImage
+                    heroImage: heroImage,
+                    intro: treatment.details?.intro || '',
+                    subTreatments: treatment.details?.subTreatments || []
                 }
             };
+
+            // If switching to link, we must force 'details' to be undefined so setDoc removes/omits it
+            if (type === 'link') {
+                delete (updated as any).details;
+            }
             await ContentService.saveTreatment(updated);
             Alert.alert("Lagret", "Endringene er oppdatert i skyen.");
         } catch (error) {
@@ -156,27 +177,11 @@ export default function TreatmentEditor() {
     };
 
     const handleDeleteSub = (subId: string) => {
-        if (Platform.OS === 'web') {
-            if (window.confirm("Er du sikker på at du vil slette denne undersiden permanent?")) {
-                performDeleteSub(subId);
-            }
-        } else {
-            Alert.alert(
-                "Slett Underside",
-                "Er du sikker på at du vil slette denne undersiden? Dette slettes permanent.",
-                [
-                    { text: "Avbryt", style: "cancel" },
-                    {
-                        text: "Slett",
-                        style: "destructive",
-                        onPress: () => performDeleteSub(subId)
-                    }
-                ]
-            );
-        }
+        setSubToDeleteId(subId);
     };
 
     const performDeleteSub = async (subId: string) => {
+        setSubToDeleteId(null);
         if (!treatment) return;
         const currentSubs = treatment.details?.subTreatments || [];
         const updatedSubs = currentSubs.filter(s => s.id !== subId);
@@ -229,6 +234,27 @@ export default function TreatmentEditor() {
 
                         <H3 style={styles.sectionTitle}>Hovedinfo</H3>
 
+                        {/* TYPE TOGGLE */}
+                        <View style={styles.inputGroup}>
+                            <Body style={styles.label}>Type Element</Body>
+                            <View style={{ flexDirection: 'row', backgroundColor: '#eee', borderRadius: 8, padding: 2 }}>
+                                <TouchableOpacity
+                                    style={{ flex: 1, padding: 8, alignItems: 'center', backgroundColor: type === 'page' ? 'white' : 'transparent', borderRadius: 6 }}
+                                    onPress={() => setType('page')}
+                                >
+                                    <Body style={{ fontWeight: type === 'page' ? 'bold' : 'normal' }}>Behandlingsside</Body>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={{ flex: 1, padding: 8, alignItems: 'center', backgroundColor: type === 'link' ? 'white' : 'transparent', borderRadius: 6 }}
+                                    onPress={() => setType('link')}
+                                >
+                                    <Body style={{ fontWeight: type === 'link' ? 'bold' : 'normal' }}>Ekstern Lenke</Body>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <H3 style={styles.sectionTitle}>Innhold</H3>
+
                         <View style={styles.inputGroup}>
                             <Body style={styles.label}>Tittel</Body>
                             <TextInput
@@ -249,19 +275,35 @@ export default function TreatmentEditor() {
                             />
                         </View>
 
-                        <View style={styles.inputGroup}>
-                            <Body style={styles.label}>Hero Bilde URL</Body>
-                            <TextInput
-                                style={styles.input}
-                                value={heroImage}
-                                onChangeText={setHeroImage}
-                                placeholder="https://..."
-                                multiline
-                            />
-                            {heroImage && heroImage.startsWith('http') && (
-                                <Body style={{ fontSize: 10, color: 'green', marginTop: 4 }}>Bilde-link ser gyldig ut</Body>
-                            )}
-                        </View>
+                        {type === 'page' && (
+                            <View style={styles.inputGroup}>
+                                <Body style={styles.label}>Hero Bilde URL</Body>
+                                <TextInput
+                                    style={styles.input}
+                                    value={heroImage}
+                                    onChangeText={setHeroImage}
+                                    placeholder="https://..."
+                                    multiline
+                                />
+                                {heroImage && heroImage.startsWith('http') && (
+                                    <Body style={{ fontSize: 10, color: 'green', marginTop: 4 }}>Bilde-link ser gyldig ut</Body>
+                                )}
+                            </View>
+                        )}
+
+                        {type === 'link' && (
+                            <View style={styles.inputGroup}>
+                                <Body style={styles.label}>Nettadresse (URL)</Body>
+                                <TextInput
+                                    style={styles.input}
+                                    value={externalUrl}
+                                    onChangeText={setExternalUrl}
+                                    placeholder="https://..."
+                                    autoCapitalize="none"
+                                    keyboardType="url"
+                                />
+                            </View>
+                        )}
 
                         <H3 style={styles.sectionTitle}>Dashboard Kort (Hjemskjerm)</H3>
 
@@ -295,56 +337,84 @@ export default function TreatmentEditor() {
 
                         <View style={styles.divider} />
 
-                        <H3 style={styles.sectionTitle}>
-                            {hasSubTreatments ? 'Undersider (Behandlinger)' : 'Seksjoner (Info)'}
-                        </H3>
+                        <View style={styles.divider} />
 
-                        {/* ADD SUB BUTTON */}
-                        <TouchableOpacity style={styles.addSubButton} onPress={handleAddSub}>
-                            <Ionicons name="add" size={20} color="white" />
-                            <Body style={{ color: 'white', fontWeight: 'bold', marginLeft: 5 }}>Ny Underside</Body>
-                        </TouchableOpacity>
+                        {type === 'page' && (
+                            <>
+                                <H3 style={styles.sectionTitle}>
+                                    {hasSubTreatments ? 'Undersider (Behandlinger)' : 'Seksjoner (Info)'}
+                                </H3>
 
-                        {/* SUB TREATMENTS LIST */}
-                        {hasSubTreatments && treatment?.details?.subTreatments?.map((sub, index) => (
-                            <TouchableOpacity
-                                key={sub.id}
-                                style={styles.subCard}
-                                // Navigate to sub-editor
-                                // We can use query params to identify: /admin/content-editor/peelinger?subId=inno
-                                // But better to use: /admin/content-editor/[id]/[subId]
-                                onPress={() => router.push(`/admin/content-editor/${id}/${sub.id}`)}
-                            >
-                                <View style={styles.row}>
-                                    <View style={styles.dot} />
-                                    <Body style={styles.subTitle}>{sub.title}</Body>
-                                </View>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
-                                    <TouchableOpacity onPress={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteSub(sub.id);
-                                    }}>
-                                        <Ionicons name="trash-outline" size={20} color={Colors.primary.deep} />
+                                {/* ADD SUB BUTTON */}
+                                <TouchableOpacity style={styles.addSubButton} onPress={handleAddSub}>
+                                    <Ionicons name="add" size={20} color="white" />
+                                    <Body style={{ color: 'white', fontWeight: 'bold', marginLeft: 5 }}>Ny Underside</Body>
+                                </TouchableOpacity>
+
+                                {/* SUB TREATMENTS LIST */}
+                                {hasSubTreatments && treatment?.details?.subTreatments?.map((sub, index) => (
+                                    <View key={sub.id}>
+                                        {subToDeleteId === sub.id ? (
+                                            <View style={[styles.subCard, styles.blockCardDeleting]}>
+                                                <View style={styles.deleteConfirmContainer}>
+                                                    <Body style={{ color: '#D32F2F', fontWeight: 'bold', marginBottom: 10 }}>
+                                                        Er du sikker på at du vil slette "{sub.title}"?
+                                                    </Body>
+                                                    <View style={{ flexDirection: 'row', gap: 15 }}>
+                                                        <TouchableOpacity
+                                                            onPress={() => setSubToDeleteId(null)}
+                                                            style={styles.cancelDeleteButton}
+                                                        >
+                                                            <Text style={{ color: '#333' }}>Avbryt</Text>
+                                                        </TouchableOpacity>
+                                                        <TouchableOpacity
+                                                            onPress={() => performDeleteSub(sub.id)}
+                                                            style={styles.confirmDeleteButton}
+                                                        >
+                                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Slett</Text>
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </View>
+                                            </View>
+                                        ) : (
+                                            <TouchableOpacity
+                                                style={styles.subCard}
+                                                onPress={() => router.push(`/admin/content-editor/${id}/${sub.id}`)}
+                                            >
+                                                <View style={styles.row}>
+                                                    <View style={styles.dot} />
+                                                    <Body style={styles.subTitle}>{sub.title}</Body>
+                                                </View>
+                                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
+                                                    <TouchableOpacity onPress={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteSub(sub.id);
+                                                    }}>
+                                                        <Ionicons name="trash-outline" size={20} color={Colors.primary.deep} />
+                                                    </TouchableOpacity>
+                                                    <Ionicons name="chevron-forward" size={18} color={Colors.neutral.lightGray} />
+                                                </View>
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+                                ))}
+
+                                {/* LEGACY SECTIONS LIST */}
+                                {!hasSubTreatments && treatment?.details?.sections?.map((sec, index) => (
+                                    <TouchableOpacity
+                                        key={index}
+                                        style={styles.subCard}
+                                        onPress={() => router.push(`/admin/content-editor/${id}/section_${index}`)}
+                                    >
+                                        <View style={styles.row}>
+                                            <Ionicons name="document-text-outline" size={16} color="#666" />
+                                            <Body style={styles.subTitle}>{sec.title || 'Uten navn'}</Body>
+                                        </View>
+                                        <Ionicons name="chevron-forward" size={18} color={Colors.neutral.lightGray} />
                                     </TouchableOpacity>
-                                    <Ionicons name="chevron-forward" size={18} color={Colors.neutral.lightGray} />
-                                </View>
-                            </TouchableOpacity>
-                        ))}
-
-                        {/* LEGACY SECTIONS LIST */}
-                        {!hasSubTreatments && treatment?.details?.sections?.map((sec, index) => (
-                            <TouchableOpacity
-                                key={index}
-                                style={styles.subCard}
-                                onPress={() => router.push(`/admin/content-editor/${id}/section_${index}`)}
-                            >
-                                <View style={styles.row}>
-                                    <Ionicons name="document-text-outline" size={16} color="#666" />
-                                    <Body style={styles.subTitle}>{sec.title || 'Uten navn'}</Body>
-                                </View>
-                                <Ionicons name="chevron-forward" size={18} color={Colors.neutral.lightGray} />
-                            </TouchableOpacity>
-                        ))}
+                                ))}
+                            </>
+                        )}
 
                         {/* Delete Treatment - Custom UI Confirmation */}
                         {id !== 'new' && treatment && (

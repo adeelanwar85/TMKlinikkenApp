@@ -43,7 +43,7 @@ export default function WelcomeScreen() {
                     resizeMode="contain"
                 />
 
-                <Body style={styles.tagline}>Din skjønnhet, vår ekspertise.</Body>
+                <Body style={styles.tagline}>- Hud, laser og legetjenester</Body>
 
                 <Button
                     title={user ? "Logg inn" : "Kom i gang"}

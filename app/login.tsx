@@ -10,13 +10,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
     const router = useRouter();
-    const { registerUser, login, isAuthenticated, enableBiometrics, hasBiometrics } = useAuth();
+    const { registerUser, login, isAuthenticated, enableBiometrics, hasBiometrics, setPin } = useAuth();
 
     // State for registration form
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
     const [birthdate, setBirthdate] = useState('');
+    const [address, setAddress] = useState('');
+    const [postcode, setPostcode] = useState('');
+    const [city, setCity] = useState('');
 
     // Check if user is already authenticated (auto-login scenario)
     useEffect(() => {
@@ -66,6 +69,25 @@ export default function LoginScreen() {
         setBirthdate(formatDate(birthdate));
     };
 
+    const handlePostcodeChange = async (text: string) => {
+        setPostcode(text);
+        if (text.length === 4) {
+            try {
+                const res = await fetch(`https://app.bring.com/address/api/no/zip-codes/${text}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.valid && data.result) {
+                        setCity(data.result);
+                    }
+                }
+            } catch (e) {
+                // Silent fail
+            }
+        } else {
+            if (city) setCity('');
+        }
+    };
+
     const handleRegister = async () => {
         if (!name || !phone || !email || !birthdate) {
             Alert.alert('Mangler info', 'Vennligst fyll ut alle feltene.');
@@ -77,14 +99,74 @@ export default function LoginScreen() {
             name,
             phone,
             email,
-            birthdate
+            birthdate,
+            address,
+            postcode,
+            city
         });
 
-        // 2. Offer Biometrics (if available)
+        // 2. Offer PIN Creation
+        Alert.alert(
+            'Opprett PIN-kode',
+            'Vil du opprette en 4-sifret PIN-kode for raskere innlogging?',
+            [
+                {
+                    text: 'Nei, hopp over',
+                    style: 'cancel',
+                    onPress: () => askForBiometrics()
+                },
+                {
+                    text: 'Ja, opprett PIN',
+                    onPress: () => {
+                        // Platform specific prompt
+                        if (Platform.OS === 'web') {
+                            const pin = window.prompt("Velg din PIN-kode (4 siffer):");
+                            if (pin && pin.length === 4 && /^\d+$/.test(pin)) {
+                                setPin(pin).then(() => {
+                                    alert("PIN lagret!");
+                                    askForBiometrics();
+                                });
+                            } else {
+                                if (pin) alert("Ugyldig PIN. Må være 4 siffer.");
+                                askForBiometrics();
+                            }
+                        } else {
+                            // iOS Secure Prompt
+                            Alert.prompt(
+                                "Ny PIN-kode",
+                                "Skriv inn 4 siffer",
+                                [
+                                    { text: "Avbryt", onPress: () => askForBiometrics() },
+                                    {
+                                        text: "Lagre",
+                                        onPress: (pin) => {
+                                            if (pin && pin.length === 4 && /^\d+$/.test(pin)) {
+                                                setPin(pin);
+                                                Alert.alert("Suksess", "PIN er lagret.");
+                                                askForBiometrics();
+                                            } else {
+                                                Alert.alert("Feil", "PIN må være 4 siffer.");
+                                                askForBiometrics();
+                                            }
+                                        }
+                                    }
+                                ],
+                                "secure-text",
+                                "",
+                                "numeric"
+                            );
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const askForBiometrics = () => {
         if (hasBiometrics) {
             Alert.alert(
                 'Aktiver FaceID / TouchID',
-                'Vil du bruke biometri for raskere innlogging neste gang?',
+                'Vil du bruke biometri for enda enklere tilgang?',
                 [
                     { text: 'Nei takk', style: 'cancel', onPress: completeLogin },
                     {
@@ -105,6 +187,7 @@ export default function LoginScreen() {
             completeLogin();
         }
     };
+
 
     const completeLogin = () => {
         router.replace('/(tabs)');
@@ -147,6 +230,35 @@ export default function LoginScreen() {
                             onChangeText={setPhone}
                             keyboardType="phone-pad"
                         />
+
+                        <Input
+                            label="Adresse (Valgfritt)"
+                            placeholder="Storgata 1"
+                            value={address}
+                            onChangeText={setAddress}
+                        />
+
+                        <View style={{ flexDirection: 'row', gap: 10 }}>
+                            <View style={{ width: 100 }}>
+                                <Input
+                                    label="Postnr"
+                                    placeholder="1234"
+                                    value={postcode}
+                                    onChangeText={handlePostcodeChange}
+                                    keyboardType="numeric"
+                                    maxLength={4}
+                                />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Input
+                                    label="Sted"
+                                    placeholder="Oslo"
+                                    value={city}
+                                    onChangeText={setCity}
+                                    editable={false} // Auto-filled usually
+                                />
+                            </View>
+                        </View>
                         <Input
                             label="E-post"
                             placeholder="ola@eksempel.no"
