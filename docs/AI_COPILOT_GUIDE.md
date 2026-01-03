@@ -43,6 +43,13 @@ Vi bruker en hybridmodell:
 *   Støtter både 24t og 2t påminnelser.
 *   Logikken håndterer nettleser-simulering (console log / alert) siden `scheduleNotificationAsync` ikke virker på web.
 
+### 5. Lojalitet & Hano-Sikkerhet (LoyaltyService)
+*   **Smart Sync:** Vi stoler ikke blindt på klienten.
+*   Bookinger lagres lokalt som `UPCOMING`.
+*   Når tiden har passert, kaller appen `LoyaltyService.syncPoints()`.
+*   Denne sjekker Hano API (`/Activity/{id}`) og ser etter `"Paid": true`.
+*   Kun betalte timer gir poeng. Avbestilte/Ikke-møtt gir *ingen* poeng.
+
 ---
 
 ## 🛠 Vanlige Oppgaver (How-To)

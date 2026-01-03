@@ -26,8 +26,8 @@ export default function TabLayout() {
                         iconName = focused ? 'megaphone' : 'megaphone-outline';
                     } else if (route.name === 'appointments') {
                         iconName = focused ? 'calendar' : 'calendar-outline';
-                    } else if (route.name === 'shop') {
-                        iconName = focused ? 'cart' : 'cart-outline';
+                    } else if (route.name === 'loyalty') {
+                        iconName = focused ? 'star' : 'star-outline';
                     } else if (route.name === 'profile') {
                         iconName = focused ? 'person' : 'person-outline';
                     } else {
@@ -41,7 +41,8 @@ export default function TabLayout() {
             <Tabs.Screen name="index" options={{ title: 'Hjem' }} />
             <Tabs.Screen name="campaigns" options={{ title: 'Kampanjer' }} />
             <Tabs.Screen name="appointments" options={{ title: 'Mine timer' }} />
-            <Tabs.Screen name="shop" options={{ title: 'Butikk' }} />
+            <Tabs.Screen name="loyalty" options={{ title: 'Kundeklubb' }} />
+            <Tabs.Screen name="shop" options={{ href: null, title: 'Butikk' }} />
             <Tabs.Screen name="profile" options={{ title: 'Profil' }} />
             <Tabs.Screen
                 name="prices"

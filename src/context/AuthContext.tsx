@@ -12,6 +12,12 @@ type UserProfile = {
     address?: string; // Optional
     postcode?: string; // Optional
     city?: string; // Optional
+    loyalty?: {
+        stamps: number; // TM Glød Kort (0-5)
+        points: number; // TM Poeng
+        tier: 'bronse' | 'sølv' | 'gull';
+        activeVouchers: string[]; // List of voucher codes
+    };
 };
 
 type AuthContextType = {

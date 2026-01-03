@@ -89,6 +89,13 @@ export default function DashboardScreen() {
                 {/* Top Bar with Notification Bell */}
                 <View style={styles.topBar}>
                     <TouchableOpacity
+                        onPress={() => router.push('/shop')}
+                        style={[styles.notificationButton, { marginRight: 10, backgroundColor: Colors.neutral.charcoal }]}
+                    >
+                        <Ionicons name="cart-outline" size={22} color={Colors.neutral.white} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
                         onPress={() => router.push('/notifications')}
                         style={styles.notificationButton}
                     >

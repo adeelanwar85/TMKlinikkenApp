@@ -44,7 +44,7 @@
     - [ ] **Mobile Testing**: Verify safe areas and gradients on iOS/Android Simulators <!-- id: 39 -->
     - [ ] **Deployment**: Configure `app.json` bundle IDs and build standalone app <!-- id: 40 -->
 
-- [ ] **Booking Flow & integration (EG Hano)** <!-- id: 41 -->
+- [x] **Booking Flow & integration (EG Hano)** <!-- id: 41 -->
     - [x] **API**: Implement `hanoClient` with Mock Data toggle <!-- id: 42 -->
     - [x] **UI Polish**: Premium Gradient Headers, Custom Cards, Dynamic Icons <!-- id: 43 -->
         - [x] **Treatment List**: Mapped icons (Smiley, Drop, etc.) <!-- id: 44 -->
@@ -54,3 +54,15 @@
 
 - [x] **Sustainability & Handoff**
     - [x] **AI Guide**: Create `docs/AI_COPILOT_GUIDE.md` for future agents
+
+- [x] **Roadmap: Kundeklubb (Loyalty)** 💎
+    - [x] **Config**: Create `LoyaltyConfig.ts` to map Medical (No) vs Wellness (Yes)
+    - [x] **Schema**: Add `stamps`, `points`, `vouchers` to User in Firestore
+    - [x] **UI**: Build "Glow Card" (Stamp View) and "Min Lommebok"
+    - [x] **Safety**: Implement Real-time Hano Check (Attendance + Payment 'Betalt av kunde').
+    - [x] **Bug Fixes**: Resolve Bundler 500 Global Error (Syntax in `summary.tsx`).
+    - [x] **GlowCard**: Fix crash due to missing `Small` import (replaced with `Caption`).
+
+- [x] **Navigation Restructure (User Request)**:
+  - [x] Replace 'Butikk' tab with 'Kundeklubb' (Loyalty).
+  - [x] Move 'Butikk' to Top Header (Right Icon).

@@ -5,6 +5,9 @@ import { Colors, Spacing } from '@/src/theme/Theme';
 import { Body, H2, H3 } from '@/src/theme/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { GlowCard } from '@/src/components/GlowCard';
+import { LOYALTY_RULES } from '@/src/constants/LoyaltyConfig';
+import { LoyaltyService } from '@/src/services/LoyaltyService';
 import React, { useEffect, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Switch, TouchableOpacity, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -64,6 +67,24 @@ export default function ProfileScreen() {
             setFaceIdEnabled(hasBiometrics);
         }
     }, [hasBiometrics]);
+
+    // Sync Loyalty Points on Mount
+    useEffect(() => {
+        if (user?.email) {
+            LoyaltyService.syncPoints(user.email.toLowerCase().trim())
+                .then(res => {
+                    if (res?.updated) {
+                        console.log("Points synced!");
+                        // Optional: refreshUser() if AuthContext supports it to show new points immediately 
+                        // For now, next app load or re-login triggers context update, 
+                        // but we might want to force update local state or Context.
+                        // Simplest: The user sees it next time or we assume real-time listener in Context works?
+                        // AuthContext usually doesn't listen real-time unless we set it up.
+                        // But for now, this logic is safer.
+                    }
+                });
+        }
+    }, [user?.email]);
 
     const handleLogout = async () => {
         if (Platform.OS === 'web') {
@@ -165,6 +186,41 @@ export default function ProfileScreen() {
                     <H2 style={styles.name}>{user?.name || 'Ola Nordmann'}</H2>
                     <Body style={styles.idText}>Fødselsdato: {user?.birthdate || '12.03.1985'}</Body>
                 </View>
+
+
+
+                {/* Min Lommebok Section */}
+                <Section title={LOYALTY_RULES.PROGRAM_NAME}>
+                    <View style={{ padding: Spacing.s }}>
+                        <GlowCard stamps={user?.loyalty?.stamps ?? 0} />
+
+                        <View style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            marginTop: Spacing.m,
+                            paddingHorizontal: Spacing.s,
+                            paddingBottom: Spacing.s
+                        }}>
+                            <View>
+                                <Body style={{ fontSize: 12, color: Colors.neutral.darkGray, textTransform: 'uppercase' }}>
+                                    {LOYALTY_RULES.CURRENCY_NAME}
+                                </Body>
+                                <H2 style={{ color: Colors.neutral.charcoal }}>
+                                    {user?.loyalty?.points ?? 0}
+                                </H2>
+                            </View>
+
+                            <View style={{ alignItems: 'flex-end' }}>
+                                <Body style={{ fontSize: 12, color: Colors.neutral.darkGray, textTransform: 'uppercase' }}>
+                                    Status
+                                </Body>
+                                <H2 style={{ color: Colors.primary.deep }}>
+                                    {(user?.loyalty?.tier ?? 'Bronse').toUpperCase()} 🥉
+                                </H2>
+                            </View>
+                        </View>
+                    </View>
+                </Section>
 
                 {/* Innstillinger Section */}
                 <Section title="Innstillinger">

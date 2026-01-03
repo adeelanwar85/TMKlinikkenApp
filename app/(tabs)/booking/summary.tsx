@@ -9,30 +9,23 @@ import { Colors, Spacing, Shadows } from '@/src/theme/Theme';
 import { H1, H2, Body, Caption } from '@/src/theme/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-// ... imports
 import { NotificationService } from '@/src/services/NotificationService';
+import { LoyaltyService } from '@/src/services/LoyaltyService';
+import { isLoyaltyEligible } from '@/src/constants/LoyaltyConfig';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function SummaryScreen() {
+export default function BookingSummaryScreen() {
     const router = useRouter();
-    const { selectedTreatment, selectedTimeSlot } = useBooking();
     const { user } = useAuth();
+    const { selectedTreatment, selectedTimeSlot } = useBooking();
     const [submitting, setSubmitting] = useState(false);
 
+    // Safety: Redirect if no treatment selected
     useEffect(() => {
-        NotificationService.registerForPushNotificationsAsync();
-    }, []);
-
-    if (!selectedTreatment || !selectedTimeSlot || !user) {
-        return (
-            <SafeAreaView style={styles.center}>
-                <Body style={styles.errorText}>Mangler informasjon for å fullføre.</Body>
-                <TouchableOpacity onPress={() => router.replace('/booking')}>
-                    <Body style={styles.linkText}>Gå tilbake til start</Body>
-                </TouchableOpacity>
-            </SafeAreaView>
-        );
-    }
+        if (!selectedTreatment || !selectedTimeSlot) {
+            router.replace('/booking');
+        }
+    }, [selectedTreatment, selectedTimeSlot]);
 
     const handleConfirm = async () => {
         if (submitting) return;
@@ -40,7 +33,11 @@ export default function SummaryScreen() {
         console.log('Confirming booking...');
 
         try {
-            await HanoService.createAppointment({
+            if (!user) throw new Error("No user found");
+            if (!selectedTreatment) throw new Error("No treatment");
+            if (!selectedTimeSlot) throw new Error("No time slot");
+
+            const response = await HanoService.createAppointment({
                 departmentId: DEPARTMENT_ID,
                 serviceId: selectedTreatment.Id,
                 start: selectedTimeSlot.Start,
@@ -57,72 +54,64 @@ export default function SummaryScreen() {
                 }
             });
 
+            // --- LOYALTY LOGIC ---
+            // Register as PENDING/UPCOMING with Hano ID
+            const userId = user.email.toLowerCase().trim();
+            await LoyaltyService.registerPendingBooking(userId, {
+                serviceId: selectedTreatment.Id,
+                serviceName: selectedTreatment.Name,
+                categoryId: selectedTreatment.CategoryId || 'unknown',
+                price: selectedTreatment.Price,
+                date: selectedTimeSlot.Start,
+                hanoId: response?.Id || 0
+            });
+            // ---------------------
+
             await NotificationService.scheduleAppointmentReminder(new Date(selectedTimeSlot.Start), selectedTreatment.Name);
 
             // Navigate to Success Screen
             router.replace('/booking/success');
 
         } catch (error) {
-            console.error('Booking Error:', error);
-            if (Platform.OS === 'web') {
-                window.alert('Noe gikk galt. Vi fikk ikke registrert timen.');
-            } else {
-                Alert.alert('Noe gikk galt', 'Vi fikk ikke registrert timen. Vennligst prøv igjen.');
-            }
-        } finally {
-            // Only reset submitting if we are NOT navigating away on web (which unmounts)
-            // But safe to reset generally.
-            if (Platform.OS !== 'web') {
-                setSubmitting(false);
-            }
+            console.error("Booking Error:", error);
+            Alert.alert("Feil", "Kunne ikke gjennomføre bestillingen. Prøv igjen.");
+            setSubmitting(false);
         }
     };
 
-    const formatDateTime = (isoDate: string) => {
-        const date = new Date(isoDate);
-        const day = date.toLocaleString('no-NO', { weekday: 'long' });
-        const dayNum = date.getDate();
-        const month = date.toLocaleString('no-NO', { month: 'long' });
-        const time = date.toLocaleString('no-NO', { hour: '2-digit', minute: '2-digit' });
-        return { day, dayNum, month, time };
-    };
+    if (!selectedTreatment || !selectedTimeSlot || !user) {
+        return <View style={styles.center}><Text>Laster...</Text></View>;
+    }
 
-    const dt = formatDateTime(selectedTimeSlot.Start);
+    const isEligible = isLoyaltyEligible(selectedTreatment.CategoryId || '', selectedTreatment.Price);
+    const pointsToEarn = Math.floor(selectedTreatment.Price / 10);
 
     return (
         <View style={styles.container}>
-            {/* Extended Header Background - Full width/height for immersive feel */}
-            <LinearGradient
-                colors={[Colors.primary.dark, Colors.primary.main]}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                style={styles.headerBackground}
-            >
+            {/* Header with Visuals */}
+            <View style={styles.headerBackground}>
                 <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
                     <View style={styles.navBar}>
-                        <TouchableOpacity onPress={router.back} style={styles.backButton}>
+                        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                             <Ionicons name="arrow-back" size={24} color="white" />
                         </TouchableOpacity>
-                        <Text style={styles.navTitle}>Se over detaljer</Text>
+                        <Text style={styles.navTitle}>Se over & Bekreft</Text>
                         <View style={{ width: 40 }} />
                     </View>
                 </SafeAreaView>
 
-                {/* Header Content Area */}
                 <View style={styles.headerHero}>
-                    <Text style={styles.heroTitle}>Din Time</Text>
-                    <Text style={styles.heroSubtitle}>Vi gleder oss til å se deg.</Text>
+                    <Text style={styles.heroTitle}>Snart ferdig ✨</Text>
+                    <Text style={styles.heroSubtitle}>Du er bare ett klikk unna litt velvære.</Text>
                 </View>
-            </LinearGradient>
+            </View>
 
+            {/* Scrollable Content */}
             <View style={styles.contentContainer}>
-                <ScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                >
-                    {/* Modern Card Design */}
+                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     <View style={styles.modernCard}>
 
-                        {/* Service Item */}
+                        {/* Treatment Item */}
                         <View style={styles.rowItem}>
                             <View style={styles.iconCircle}>
                                 <Ionicons name="sparkles" size={20} color={Colors.primary.main} />
@@ -130,7 +119,7 @@ export default function SummaryScreen() {
                             <View style={styles.itemText}>
                                 <Text style={styles.label}>BEHANDLING</Text>
                                 <Text style={styles.valueLarge}>{selectedTreatment.Name}</Text>
-                                <Text style={styles.valueSub}>{selectedTreatment.Duration} • {selectedTreatment.Price},-</Text>
+                                <Text style={styles.valueSub}>{selectedTreatment.Duration} min • {selectedTreatment.Price},-</Text>
                             </View>
                         </View>
 
@@ -143,8 +132,12 @@ export default function SummaryScreen() {
                             </View>
                             <View style={styles.itemText}>
                                 <Text style={styles.label}>TIDSPUNKT</Text>
-                                <Text style={styles.valueLarge}>{dt.day} {dt.dayNum}. {dt.month}</Text>
-                                <Text style={styles.valueSub}>Kl. {dt.time}</Text>
+                                <Text style={styles.valueMain}>
+                                    {new Date(selectedTimeSlot.Start).toLocaleDateString('no-NO', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                </Text>
+                                <Text style={styles.valueSub}>
+                                    Kl. {new Date(selectedTimeSlot.Start).toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' })}
+                                </Text>
                             </View>
                         </View>
 
@@ -159,6 +152,33 @@ export default function SummaryScreen() {
                                 <Text style={styles.label}>KONTAKT</Text>
                                 <Text style={styles.valueMain}>{user.name}</Text>
                                 <Text style={styles.valueSub}>{user.phone}</Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.separator} />
+
+                        {/* Loyalty Item */}
+                        <View style={styles.rowItem}>
+                            <View style={[styles.iconCircle, { backgroundColor: isEligible ? '#FFF9C4' : '#FFEBEE' }]}>
+                                <Ionicons
+                                    name={isEligible ? "star" : "shield"}
+                                    size={20}
+                                    color={isEligible ? "#FBC02D" : Colors.neutral.darkGray}
+                                />
+                            </View>
+                            <View style={styles.itemText}>
+                                <Text style={styles.label}>KUNDEKLUBB</Text>
+                                {isEligible ? (
+                                    <>
+                                        <Text style={styles.valueMain}>+{pointsToEarn} Poeng</Text>
+                                        <Text style={[styles.valueSub, { color: Colors.primary.main }]}>Du får et stempel i Glød-kortet ✨</Text>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Text style={styles.valueMain}>Ingen bonus</Text>
+                                        <Text style={styles.valueSub}>Medisinsk behandling gir ikke poeng (Helsepersonelloven).</Text>
+                                    </>
+                                )}
                             </View>
                         </View>
 
@@ -212,6 +232,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.m,
         borderBottomLeftRadius: 32,
         borderBottomRightRadius: 32,
+        backgroundColor: Colors.primary.deep, // Fallback or explicit color if image missing
     },
     headerSafeArea: {
         marginBottom: Spacing.s,
@@ -333,24 +354,23 @@ const styles = StyleSheet.create({
         // Ensure no leakage 
         shadowColor: Colors.primary.main,
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.25,
-        shadowRadius: 15,
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
         elevation: 8,
-        backgroundColor: 'transparent',
     },
     gradientButton: {
         flexDirection: 'row',
-        height: 60,
-        borderRadius: 20, // Smooth rounded button
         alignItems: 'center',
         justifyContent: 'center',
-        overflow: 'hidden', // Key fix for "white squares"
+        paddingVertical: 18,
+        paddingHorizontal: Spacing.l,
+        borderRadius: 20,
     },
     buttonText: {
+        color: 'white',
         fontSize: 18,
         fontWeight: 'bold',
-        color: 'white',
-        marginRight: 10,
+        letterSpacing: 1,
     },
     buttonIcon: {
         marginLeft: 4,

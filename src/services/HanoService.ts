@@ -18,7 +18,8 @@ export interface Appointment {
     Service: string;
     Start: string;
     End: string;
-    Status: 'Confirmed' | 'Cancelled';
+    Status: string; // 'Confirmed', 'Cancelled' etc.
+    Paid?: boolean;
 }
 
 export interface CreateBookingPayload {
@@ -30,7 +31,6 @@ export interface CreateBookingPayload {
         lastName: string;
         email: string;
         phone: string;
-        dob?: string;
         dob?: string;
         address?: string;
         postcode?: string;
@@ -89,8 +89,8 @@ const mockSlots: AvailableSlot[] = [
 ];
 
 export let mockAppointments: Appointment[] = [
-    { Id: 101, Service: 'Rynkebehandling', Start: '2025-12-28T10:00:00', End: '2025-12-28T10:30:00', Status: 'Confirmed' },
-    { Id: 102, Service: 'Konsultasjon', Start: '2026-01-05T14:00:00', End: '2026-01-05T14:30:00', Status: 'Confirmed' }
+    { Id: 101, Service: 'Rynkebehandling', Start: '2025-12-28T10:00:00', End: '2025-12-28T10:30:00', Status: 'Confirmed', Paid: true },
+    { Id: 102, Service: 'Konsultasjon', Start: '2026-01-05T14:00:00', End: '2026-01-05T14:30:00', Status: 'Confirmed', Paid: false }
 ];
 
 // --- Categories Logic (for Prices Screen) ---
@@ -124,12 +124,6 @@ const CATEGORY_MAPPING: Record<string, string> = {
     'diverse': 'annet',
     'injeksjon': 'injeksjoner', // Catch 'injeksjonsbehandlinger'
 };
-
-
-
-// ... (existing imports)
-
-// ...
 
 const CATEGORY_META: Record<string, { title: string, icon: any, image?: any }> = {
     'injeksjoner': { title: 'Injeksjoner', icon: 'medkit-outline', image: LOCAL_ASSET_MAP['injeksjoner'] },
@@ -282,13 +276,14 @@ export const HanoService = {
                     Service: service,
                     Start: payload.start,
                     End: new Date(new Date(payload.start).getTime() + 30 * 60000).toISOString(),
-                    Status: 'Confirmed'
+                    Status: 'Confirmed',
+                    Paid: false
                 };
                 const currentList = await getStoredAppointments();
                 currentList.push(newAppointment);
                 mockAppointments = currentList;
                 await AsyncStorage.setItem('mockAppointments', JSON.stringify(currentList));
-                return { Success: true, Message: "Mock Booking Confirmed" };
+                return { Success: true, Message: "Mock Booking Confirmed", Id: newAppointment.Id };
             }
 
             const apiPayload = {
@@ -338,7 +333,42 @@ export const HanoService = {
             return false;
         }
         return true;
-    }
+    },
+
+    // --- VERIFICATION (New) ---
+    getAppointment: async (appointmentId: string | number): Promise<Appointment | null> => {
+        try {
+            if (USE_MOCK) {
+                // Find in mock list
+                const currentList = await getStoredAppointments();
+                const mockApp = currentList.find(a => a.Id === Number(appointmentId));
+                return mockApp || { Id: Number(appointmentId), Service: 'Mock', Start: '', End: '', Status: 'Confirmed', Paid: true };
+            }
+            // Try standard endpoint for Hano V2
+            // Note: If this fails, we might need /Activity/search?id=...
+            const response = await client.get(`/Activity/${appointmentId}`);
+
+            // Map response to our Appointment interface
+            // Hano V2 usually returns Activity object
+            const data = response.data;
+            if (!data) return null;
+
+            // Console log the raw data to discover true Payment fields
+            console.log("[HanoService] Raw Verification Data:", JSON.stringify(data, null, 2));
+
+            return {
+                Id: data.Id || appointmentId,
+                Service: data.Service?.Name || 'Unknown',
+                Start: data.StartDate,
+                End: data.EndDate,
+                Status: data.Status,
+                Paid: data.Paid // FOUND IN SWAGGER
+            };
+        } catch (error) {
+            console.error("Hano Verification Error:", error);
+            return null;
+        }
+    },
 };
 
 export default HanoService;
