@@ -32,6 +32,7 @@ Vi bruker en hybridmodell:
 *   **Dynamiske overstyringer:** Hentes fra Firestore (`treatments`-kolleksjonen).
 *   **Editor:** `app/admin/content-editor/[id].tsx` lar admin endre tekster/bilder.
     *   *Tips:* Hvis `details` er `undefined` og `url` er satt, rendres det som en ekstern lenke.
+*   **Push-varsler:** Admin-panelet har en "Send Varsel"-fane for å teste eller sende manuelle beskjeder til alle (hvis backend støtter det). Lokale påminnelser kjører automatisk.
 
 ### 3. Booking & Hano Integrasjon
 *   Vi bruker en **mock-klient** (`HanoService.ts`) som standard.
@@ -44,11 +45,14 @@ Vi bruker en hybridmodell:
 *   Logikken håndterer nettleser-simulering (console log / alert) siden `scheduleNotificationAsync` ikke virker på web.
 
 ### 5. Lojalitet & Hano-Sikkerhet (LoyaltyService)
-*   **Smart Sync:** Vi stoler ikke blindt på klienten.
-*   Bookinger lagres lokalt som `UPCOMING`.
-*   Når tiden har passert, kaller appen `LoyaltyService.syncPoints()`.
-*   Denne sjekker Hano API (`/Activity/{id}`) og ser etter `"Paid": true`.
-*   Kun betalte timer gir poeng. Avbestilte/Ikke-møtt gir *ingen* poeng.
+*   **Dual Logic:** Vi skiller nå strengt mellom **Stempler** og **Poeng**.
+    *   **Stempler (Treatments):** Gis for behandlinger > 1500,- som *ikke* er produkter. Sjekkes mot `WELLNESS_CATEGORIES` i `LoyaltyConfig.ts`.
+    *   **Poeng (Products):** Gis kun for produkter definert i `PRODUCT_CATEGORIES` (f.eks. Exuviance, Krem). NB: Krever tilgang til Salgs-API for å virke automatisk.
+*   **Smart Sync:**
+    *   Bookinger lagres lokalt som `UPCOMING`.
+    *   `syncFullHistory` henter historikk fra Hano (`/Activity`).
+    *   Sikkerhet: Sjekker alltid `Paid: true` fra Hano før utdeling.
+*   **VIP Status:** Beregnes basert på totalt forbruk (behandlinger + produkter) siste 12 mnd (>15k = Gull).
 
 ---
 

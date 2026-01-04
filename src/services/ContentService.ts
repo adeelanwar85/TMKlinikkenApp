@@ -10,7 +10,9 @@ const COLLECTION_CAMPAIGNS = 'content_campaigns';
 const COLLECTION_EMPLOYEES = 'content_employees';
 const COLLECTION_NOTIFICATIONS = 'content_notifications';
 const COLLECTION_CONFIG = 'content_config';
+const COLLECTION_PAGES = 'content_pages';
 const DOC_INFO = 'clinic_info'; // ID for the config doc
+const DOC_LOYALTY = 'loyalty';
 
 // --- Types ---
 
@@ -52,6 +54,39 @@ export interface BroadcastMessage {
     image?: string | null;
 }
 
+export interface LoyaltyContent {
+    intro: {
+        title: string;
+        body: string;
+        joinTitle: string;
+        joinText: string;
+    };
+    card: {
+        subtitle: string;
+    };
+    sections: {
+        glowCard: {
+            title: string;
+            body: string;
+            bullets: { title: string; text: string }[];
+            disclaimer: string;
+        };
+        points: {
+            title: string;
+            body: string;
+            bullets: { title: string; text: string }[];
+            disclaimer: string;
+        };
+        vip: {
+            title: string;
+            body: string;
+            bullets: { title: string; text: string }[];
+            disclaimer: string;
+        };
+    };
+    faq: { question: string; answer: string }[];
+}
+
 // --- Default Data for Config ---
 const DEFAULT_CONFIG: ClinicConfig = {
     openingHours: {
@@ -74,6 +109,59 @@ const DEFAULT_CONFIG: ClinicConfig = {
         level: 'info'
     },
     minAppVersion: '1.0.0'
+};
+
+const DEFAULT_LOYALTY_CONTENT: LoyaltyContent = {
+    intro: {
+        title: "Velkommen til TM Kundeklubb",
+        body: "Vi ønsker å belønne deg som velger TM Klinikken for din hudhelse og velvære. Gjennom vårt fordelsprogram får du faste fordeler, bonuspoeng på favorittprodukter og eksklusive VIP-goder.",
+        joinTitle: "Hvordan blir jeg medlem?",
+        joinText: "Det er helt gratis! Last ned og registrer deg i TM-appen."
+    },
+    card: {
+        subtitle: "Samle 5 stempler – få en belønning!"
+    },
+    sections: {
+        glowCard: {
+            title: "1. TM Glød Kort – Ditt digitale klippekort",
+            body: "Ta vare på huden din og bli belønnet! Med vårt digitale klippekort i appen samler du stempler på hud- og velværebehandlinger.",
+            bullets: [
+                { title: "Slik fungerer det:", text: "Du får 1 stempel for hver hudbehandling over 1500 kr" },
+                { title: "", text: "Gjelder for populære behandlinger som Hydrafacial, Dermapen og klassiske ansiktsbehandlinger" },
+                { title: "", text: "Når du har samlet 5 stempler, får du din 6. behandling gratis!" }
+            ],
+            disclaimer: "*Merk: TM Glød Kort gjelder kun hudpleiebehandlinger, ikke medisinske injeksjoner iht. lovverk.*"
+        },
+        points: {
+            title: "2. TM Poeng – Bonus på alle produkter",
+            body: "Vi vil at det skal lønne seg å handle hudpleie lokalt. Derfor får du alltid bonuspoeng når du kjøper produkter hos oss.",
+            bullets: [
+                { title: "10 % bonuspoeng:", text: "Du får 10 % bonuspoeng på alle fysiske produkter (gjelder ikke reseptbelagte varer)" },
+                { title: "", text: "Poengene kan brukes som betaling på ditt neste produktkjøp" },
+                { title: "", text: "Poengene er gyldige i 12 måneder fra kjøpsdato" }
+            ],
+            disclaimer: "*Vi sender deg en vennlig påminnelse i appen før poengene dine utløper, slik at du rekker å bruke dem!*"
+        },
+        vip: {
+            title: "3. VIP-Status: Gull-medlem",
+            body: "For våre mest lojale kunder har vi en egen VIP-status som gir deg det lille ekstra.",
+            bullets: [
+                { title: "Slik blir du Gull-medlem:", text: "Handler du for over 15 000 kr i løpet av et år, blir du automatisk Gull-medlem. Alt du kjøper hos oss teller – også injeksjonsbehandlinger." },
+                { title: "Dine Gull-fordeler:", text: "Prioritert booking: Få tilgang til timer før alle andre" },
+                { title: "", text: "Gratis hudanalyse: Én grundig hudanalyse i året inkludert" },
+                { title: "", text: "Eksklusive invitasjoner: Bli prioritert til våre populære kundekvelder og arrangementer" },
+                { title: "", text: "Ekstra lang poenggyldighet: Dine TM Poeng varer i 24 måneder (dobbelt så lenge som vanlige medlemmer)" }
+            ],
+            disclaimer: "*Har du spørsmål om kundeklubben? Kontakt oss eller spør ved din neste behandling!*"
+        }
+    },
+    faq: [
+        { question: "Hvor lenge er mine TM Poeng gyldige?", answer: "Dine opptjente bonuspoeng er gyldige i 12 måneder fra kjøpsdatoen. Vi sender deg en vennlig påminnelse i appen før poengene dine utløper, slik at du rekker å bruke dem på dine favorittprodukter!" },
+        { question: "Utløper alle poengene mine samtidig?", answer: "Nei! Hvert kjøp har sin egen utløpsdato (12 måneder fra kjøpsdato). Dette betyr at poengene dine utløper rullerende, ikke alle på én gang." },
+        { question: "Hva skjer med min Gull-status etter ett år?", answer: "Din Gull-status fornyes automatisk hvis du handler for over 15 000 kr i løpet av de siste 12 månedene. Vi varsler deg i appen når du nærmer deg fornyelse." },
+        { question: "Kan jeg kombinere TM Poeng med gratis behandling fra TM Glød Kort?", answer: "Ja! Du kan bruke TM Poeng på produktkjøp selv om du løser inn en gratis behandling." },
+        { question: "Utløper stemplene mine på TM Glød Kort?", answer: "Hvert stempel i ditt digitale TM Glød Kort er gyldig i 12 måneder fra den datoen behandlingen ble utført. Vi ønsker å hjelpe deg med å oppnå de beste resultatene for din hud, og anbefaler derfor jevnlige behandlinger for å holde gløden ved like!" }
+    ]
 };
 
 export const ContentService = {
@@ -312,6 +400,31 @@ export const ContentService = {
         });
     },
 
+    // --- 6. PAGE CONTENT (Loyalty, etc) ---
+
+    getLoyaltyContent: async (): Promise<LoyaltyContent> => {
+        try {
+            const docRef = doc(db, COLLECTION_PAGES, DOC_LOYALTY);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                return docSnap.data() as LoyaltyContent;
+            }
+            return DEFAULT_LOYALTY_CONTENT;
+        } catch (error) {
+            console.error("Error fetching loyalty content:", error);
+            return DEFAULT_LOYALTY_CONTENT;
+        }
+    },
+
+    saveLoyaltyContent: async (content: LoyaltyContent) => {
+        try {
+            await setDoc(doc(db, COLLECTION_PAGES, DOC_LOYALTY), content);
+        } catch (error) {
+            console.error("Error saving loyalty content:", error);
+            throw error;
+        }
+    },
+
     // --- SEEDING / MIGRATION ---
 
     seedAllData: async () => {
@@ -366,6 +479,13 @@ export const ContentService = {
             const currentConfig = await getDoc(doc(db, COLLECTION_CONFIG, DOC_INFO));
             if (!currentConfig.exists()) {
                 await setDoc(doc(db, COLLECTION_CONFIG, DOC_INFO), DEFAULT_CONFIG);
+            }
+
+            // 5. Pages (Loyalty)
+            console.log("Seeding Pages...");
+            const currentLoyalty = await getDoc(doc(db, COLLECTION_PAGES, DOC_LOYALTY));
+            if (!currentLoyalty.exists()) {
+                await setDoc(doc(db, COLLECTION_PAGES, DOC_LOYALTY), DEFAULT_LOYALTY_CONTENT);
             }
 
             console.log("Seeding Complete! ✅");

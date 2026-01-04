@@ -1,9 +1,26 @@
 import { Colors } from '@/src/theme/Theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useAuth } from '@/src/context/AuthContext';
+import { LoyaltyService } from '@/src/services/LoyaltyService';
 
 export default function TabLayout() {
+    const { user } = useAuth();
+
+    // Auto-Sync Loyalty History on App Start
+    useEffect(() => {
+        if (user?.id && user?.phone) {
+            LoyaltyService.syncFullHistory(user.id, user.phone)
+                .then(res => {
+                    if (res.updated) {
+                        console.log("Loyalty Auto-Sync Updated:", res);
+                    }
+                })
+                .catch(err => console.error("Loyalty Auto-Sync Failed:", err));
+        }
+    }, [user?.id]);
+
     return (
         <Tabs
             screenOptions={({ route }) => ({

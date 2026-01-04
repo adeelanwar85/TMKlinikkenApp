@@ -63,6 +63,16 @@
     - [x] **Bug Fixes**: Resolve Bundler 500 Global Error (Syntax in `summary.tsx`).
     - [x] **GlowCard**: Fix crash due to missing `Small` import (replaced with `Caption`).
     - [x] **Polish**: Integrate Logo in Card, Colored Status Dots, and Clearer Text explanation.
+    - [x] **Redesign (User Feedback)**:
+        - [x] Remove Red Banner (Clean White Layout).
+        - [x] Fix Logo Visibility (White Tint on Dark Red Card).
+        - [x] Fix Scrolling Overlap.
+        - [x] Finalize Layout & Text Content (Move intro below card, update VIP terms).
+        - [x] **Dynamic Content**: Make all Loyalty text editable via Admin Panel.
+    - [x] **Logic & Automation**:
+        - [x] **Stamps**: Working (via `/Activity`).
+        - [ ] **Points**: BLOCKED (API missing `/Sale` or `/Receipt` access for Products).
+        - [x] **VIP**: Partial (Counts Treatments only).
 
 - [x] **Navigation Restructure (User Request)**:
   - [x] Replace 'Butikk' tab with 'Kundeklubb' (Loyalty).

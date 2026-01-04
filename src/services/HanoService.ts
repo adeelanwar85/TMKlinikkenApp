@@ -20,6 +20,8 @@ export interface Appointment {
     End: string;
     Status: string; // 'Confirmed', 'Cancelled' etc.
     Paid?: boolean;
+    Price?: number;
+    CategoryId?: number | string;
 }
 
 export interface CreateBookingPayload {
@@ -354,7 +356,7 @@ export const HanoService = {
             if (!data) return null;
 
             // Console log the raw data to discover true Payment fields
-            console.log("[HanoService] Raw Verification Data:", JSON.stringify(data, null, 2));
+            // console.log("[HanoService] Raw Verification Data:", JSON.stringify(data, null, 2));
 
             return {
                 Id: data.Id || appointmentId,
@@ -369,6 +371,46 @@ export const HanoService = {
             return null;
         }
     },
+
+    getCustomerAppointments: async (phoneNumber: string): Promise<Appointment[]> => {
+        try {
+            if (USE_MOCK) {
+                return HanoService.getUserAppointments();
+            }
+
+            // Clean phone number (remove spaces, +47 etc if needed, though Hano might be strict)
+            const cleanPhone = phoneNumber.replace(/\s/g, '').replace('+47', '');
+
+            // Use /Activity/search?mobile={phone}
+            // Swagger suggests: /Activity/search
+            const response = await client.get('/Activity/search', {
+                params: {
+                    mobile: cleanPhone,
+                    departmentId: DEPARTMENT_ID,
+                    from: '2020-01-01', // Fetch far back history
+                    to: '2030-12-31'
+                }
+            });
+
+            const data = response.data;
+            if (!Array.isArray(data)) return [];
+
+            return data.map((item: any) => ({
+                Id: item.Id,
+                Service: item.Service?.Name || 'Ukjent',
+                Start: item.StartDate,
+                End: item.EndDate,
+                Status: item.Status,
+                Paid: item.Paid,
+                Price: item.Price || 0, // Ensure we capture price for VIP calculation
+                CategoryId: item.Service?.ServiceGroupId // Capture category for filtering
+            }));
+
+        } catch (error) {
+            console.error("Hano History Error:", error);
+            return [];
+        }
+    }
 };
 
 export default HanoService;

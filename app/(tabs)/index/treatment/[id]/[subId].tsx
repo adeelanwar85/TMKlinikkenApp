@@ -107,7 +107,7 @@ export default function SubTreatmentDetailScreen() {
                         // Detect Types
                         const isProcess = titleLower.includes('slik') || titleLower.includes('foregår') || titleLower.includes('klinikk');
                         const isCandidates = titleLower.includes('hvem') || titleLower.includes('passer');
-                        const isAbout = titleLower.includes('om ') || titleLower.includes('hvorfor');
+                        const isAbout = titleLower.includes('om ') || titleLower.includes('hvorfor') || titleLower.includes('hva') || titleLower.includes('hvordan') || titleLower.includes('virker');
                         const isAftercare = titleLower.includes('etter') || titleLower.includes('info');
 
                         // --- A. ABOUT / INTRO (Beige Card) ---

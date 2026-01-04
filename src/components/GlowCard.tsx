@@ -16,21 +16,18 @@ export const GlowCard: React.FC<GlowCardProps> = ({ stamps }) => {
 
     return (
         <View style={styles.container}>
-            {/* Background decoration */}
-            <View style={styles.glowEffect} />
-
             <View style={styles.header}>
                 <View style={styles.headerContent}>
                     <View style={styles.logoRow}>
                         <Image
-                            source={require('@/assets/images/tm-logo-white.png')}
-                            style={styles.logo}
+                            source={require('@/assets/images/tm-tile-v2.png')}
+                            style={styles.brandLogo}
                             resizeMode="contain"
                         />
                         <H3 style={styles.cardTitle}>GLØD KORT</H3>
                     </View>
                     <Caption style={styles.subText}>
-                        Samle {totalStamps} stempler – få en {LOYALTY_RULES.REWARD_NAME}!
+                        Samle 5 stempler – få en belønning!
                     </Caption>
                 </View>
                 {/* Visual Icon */}
@@ -81,16 +78,6 @@ const styles = StyleSheet.create({
         width: '100%',
         maxWidth: 380, // Prevent too wide
     },
-    glowEffect: {
-        position: 'absolute',
-        top: -50,
-        right: -50,
-        width: 150,
-        height: 150,
-        borderRadius: 75,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        transform: [{ scale: 1.5 }],
-    },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -106,16 +93,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 4,
     },
-    logo: {
-        width: 30, // Small TM Logo
-        height: 20,
-        marginRight: 6,
+    brandLogo: {
+        width: 32,
+        height: 32,
+        marginRight: 8, // Reduced spacing
+        tintColor: 'white' // User requested inversion
     },
     cardTitle: {
         color: 'white',
-        letterSpacing: 1.5,
+        letterSpacing: 2,
         fontSize: 14,
-        fontWeight: 'bold',
+        fontWeight: '700',
     },
     subText: {
         color: 'rgba(255,255,255,0.8)',

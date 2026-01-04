@@ -71,6 +71,26 @@ export default function ContentEditorList() {
                 </View>
             ) : (
                 <ScrollView contentContainerStyle={styles.content}>
+
+                    {/* NEW SECTION: PAGES */}
+                    <H3 style={styles.sectionHeader}>Rediger Sider</H3>
+                    <TouchableOpacity
+                        style={styles.card}
+                        onPress={() => router.push('/admin/content-editor/loyalty')}
+                        activeOpacity={0.8}
+                    >
+                        <View style={[styles.iconBox, { backgroundColor: Colors.primary.light }]}>
+                            <Ionicons name="gift-outline" size={24} color={Colors.primary.deep} />
+                        </View>
+                        <View style={styles.cardContent}>
+                            <H3 style={styles.cardTitle}>Kundeklubb</H3>
+                            <Body style={styles.cardSubtitle}>Rediger tekst på lojalitetssiden (Glød kort, Poeng, VIP)</Body>
+                        </View>
+                        <Ionicons name="pencil" size={20} color={Colors.neutral.lightGray} />
+                    </TouchableOpacity>
+
+                    {/* EXISTING SECTION: TREATMENTS */}
+                    <H3 style={styles.sectionHeader}>Behandlingsmeny</H3>
                     <Body style={styles.subtitle}>Her er alle hovedkategoriene. Trykk på en for å redigere tekst, bilder og undersider.</Body>
 
                     {treatments.map((item) => (
@@ -159,6 +179,13 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.m,
         color: Colors.neutral.darkGray,
         lineHeight: 20,
+    },
+    sectionHeader: {
+        fontSize: 18,
+        color: Colors.primary.deep,
+        fontWeight: 'bold',
+        marginTop: Spacing.m,
+        marginBottom: Spacing.s,
     },
     card: {
         flexDirection: 'row',

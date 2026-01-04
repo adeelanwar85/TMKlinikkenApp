@@ -37,6 +37,23 @@ export const WELLNESS_CATEGORIES = [
     'peeling'
 ];
 
+// Categories strictly defined as PRODUCTS (Earns Points Only)
+export const PRODUCT_CATEGORIES = [
+    'produkter',
+    'salgsvarer',
+    'kremer',
+    'rens',
+    'gavekort', // Gift cards often earn points
+    'hudpleieprodukter',
+    'sminke',
+    'diverse',
+    'exuviance',
+    'neostrata',
+    'concealer',
+    'serum',
+    'krem'
+];
+
 export const LOYALTY_RULES = {
     PROGRAM_NAME: 'TM Kundeklubb',
     STAMP_CARD_NAME: 'TM Glød Kort',
@@ -56,7 +73,11 @@ export const LOYALTY_RULES = {
     // Stamp Rules (Wellness Only)
     MIN_PRICE_FOR_STAMP: 1500, // NOK
     STAMPS_REQUIRED_FOR_REWARD: 5,
-    REWARD_NAME: 'Gratis Express Facial'
+    REWARD_NAME: 'Gratis Express Facial',
+
+    // VIP Qualification (Rolling 12 Months)
+    VIP_QUALIFYING_AMOUNT: 15000,
+    VIP_VALIDITY_MONTHS: 12
 };
 
 /**
@@ -78,4 +99,12 @@ export const isLoyaltyEligible = (categoryId: string, price: number): boolean =>
     }
 
     return false; // Default to safe (no loyalty) if unknown
+};
+
+/**
+ * Checks if a purchase is a Product (Eligible for Points).
+ */
+export const isLoyaltyProduct = (categoryId: string): boolean => {
+    const normalizedCat = categoryId.toLowerCase();
+    return PRODUCT_CATEGORIES.some(prod => normalizedCat.includes(prod));
 };
