@@ -62,6 +62,7 @@
     - [x] **Safety**: Implement Real-time Hano Check (Attendance + Payment 'Betalt av kunde').
     - [x] **Bug Fixes**: Resolve Bundler 500 Global Error (Syntax in `summary.tsx`).
     - [x] **GlowCard**: Fix crash due to missing `Small` import (replaced with `Caption`).
+    - [x] **Polish**: Integrate Logo in Card, Colored Status Dots, and Clearer Text explanation.
 
 - [x] **Navigation Restructure (User Request)**:
   - [x] Replace 'Butikk' tab with 'Kundeklubb' (Loyalty).
