@@ -30,9 +30,10 @@ Nytt "TM Kundeklubb" system er implementert.
 *   **Poeng:** 10% av beløpet på **produkter** (venter på API-tilgang for historikk).
 *   **Sikkerhet (Smart Sync):** Poeng deles kun ut etter at Hano API bekrefter at timen er gjennomført ("Paid" status: true). Dette hindrer juks ved avbestillinger eller no-shows.
     > [!NOTE]
-    > **API Status:** Vi har bygget full støtte for både Stempler og Poeng.
-    > - **Stempler:** Fungerer 100% i dag (henter data fra timeboken).
-    > - **Poeng:** Logikken er klar, men vil først aktiveres når Hano gir tilgang til "Sales" eller "Receipt" API-et for å se produktkjøp.
+    > **API Status:** Full Integrasjon er NÅ PÅ PLASS! 🚀
+    > - **Stempler:** Henter behandlinger fra Hano.
+    > - **Poeng:** Vi fant "Product History" endepunktet! Nå hentes alle produktkjøp automatisk hvis kundenummeret blir funnet via Telefon eller E-post.
+    > - **VIP:** Baseres på totalt forbruk (Behandling + Produkter) siste 12 mn.
 
 ### Visning
 *   Egen fane **"Kundeklubb"** (stjerne-ikon) i bunnmenyen.

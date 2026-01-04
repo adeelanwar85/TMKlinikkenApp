@@ -53,7 +53,8 @@
         - [x] **Design Consistency**: Ensure all treatments match "Peelinger" pilot design (Intro Card Logic added for Hva/Hvordan/Om/Hvorfor)
     - [ ] **Functionality**
         - [ ] **Booking**: Swap "Avbestill" and "Flytt time" button positions
-        - [ ] **Hano**: Sync patient details (create customer) to Hano API on booking
+        - [x] **Hano**: Sync patient details (create customer) to Hano API on booking (Implemented lookup for Loyalty)
+        - [x] **Loyalty**: Full Hano Integration (Treatments + Products) ✅
         - [ ] **Admin**: Verify ability to add generic main menu buttons/elements
     - [ ] **Auth & Security**
         - [ ] **Superuser**: Document password recovery process

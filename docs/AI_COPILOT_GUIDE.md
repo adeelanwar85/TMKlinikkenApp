@@ -47,7 +47,8 @@ Vi bruker en hybridmodell:
 ### 5. Lojalitet & Hano-Sikkerhet (LoyaltyService)
 *   **Dual Logic:** Vi skiller nå strengt mellom **Stempler** og **Poeng**.
     *   **Stempler (Treatments):** Gis for behandlinger > 1500,- som *ikke* er produkter. Sjekkes mot `WELLNESS_CATEGORIES` i `LoyaltyConfig.ts`.
-    *   **Poeng (Products):** Gis kun for produkter definert i `PRODUCT_CATEGORIES` (f.eks. Exuviance, Krem). NB: Krever tilgang til Salgs-API for å virke automatisk.
+    *   **Poeng (Products):** Gis for produkter definert i `PRODUCT_CATEGORIES` (10% poeng).
+        *   **NEW:** Vi bruker `POST /customer/search` (Email/Sms) + `GET /customer/{id}/history/products` for å hente faktisk kjøpshistorikk og gi poeng automatisk.
 *   **Smart Sync:**
     *   Bookinger lagres lokalt som `UPCOMING`.
     *   `syncFullHistory` henter historikk fra Hano (`/Activity`).

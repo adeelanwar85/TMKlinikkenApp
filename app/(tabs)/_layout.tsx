@@ -11,7 +11,7 @@ export default function TabLayout() {
     // Auto-Sync Loyalty History on App Start
     useEffect(() => {
         if (user?.id && user?.phone) {
-            LoyaltyService.syncFullHistory(user.id, user.phone)
+            LoyaltyService.syncFullHistory(user.id, user.phone, user.email)
                 .then(res => {
                     if (res.updated) {
                         console.log("Loyalty Auto-Sync Updated:", res);

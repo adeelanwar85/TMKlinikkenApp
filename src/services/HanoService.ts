@@ -24,6 +24,14 @@ export interface Appointment {
     CategoryId?: number | string;
 }
 
+export interface ProductPurchase {
+    Id: number;
+    Name: string;
+    Price: number;
+    Quantity: number;
+    Purchased: string; // ISO Date
+}
+
 export interface CreateBookingPayload {
     departmentId: number;
     serviceId: number;
@@ -378,11 +386,10 @@ export const HanoService = {
                 return HanoService.getUserAppointments();
             }
 
-            // Clean phone number (remove spaces, +47 etc if needed, though Hano might be strict)
+            // Clean phone number (remove spaces, +47 etc if needed)
             const cleanPhone = phoneNumber.replace(/\s/g, '').replace('+47', '');
 
             // Use /Activity/search?mobile={phone}
-            // Swagger suggests: /Activity/search
             const response = await client.get('/Activity/search', {
                 params: {
                     mobile: cleanPhone,
@@ -408,6 +415,76 @@ export const HanoService = {
 
         } catch (error) {
             console.error("Hano History Error:", error);
+            return [];
+        }
+    },
+
+    // --- PRODUCT HISTORY (NEW) ---
+
+    // 1. Resolve Customer ID via Search (Try Phone, then Email)
+    findCustomerId: async (phone: string, email?: string): Promise<number | null> => {
+        if (USE_MOCK) return 999;
+
+        const trySearch = async (field: string, value: string): Promise<number | null> => {
+            try {
+                // Hano requires specific payload: { Field: "...", Value: "..." }
+                // Based on successful probe: Field="email" works reliably. Field="sms" returns 404 if no match.
+                const response = await client.post('/customer/search', {
+                    Field: field,
+                    Value: value,
+                    IgnorePassword: true
+                });
+
+                const data = response.data;
+                if (Array.isArray(data) && data.length > 0) return data[0].Id;
+                if (data && data.Id) return data.Id;
+                return null;
+            } catch (error: any) {
+                // 404 means "Not Found" in Hano's logic, which is fine
+                if (error.response?.status === 404) return null;
+                console.warn(`Hano Customer Search (${field}) failed:`, error.message);
+                return null;
+            }
+        };
+
+        // Step 1: Try searching by Phone (Field: "sms")
+        // Try exact first, then with/without +47? For now, raw input.
+        let id = await trySearch('sms', phone);
+        if (id) return id;
+
+        // Step 2: Try by Email if available
+        if (email) {
+            id = await trySearch('email', email);
+            if (id) return id;
+        }
+
+        return null;
+    },
+
+    // 2. Fetch Product Purchases
+    getCustomerProductHistory: async (customerId: number): Promise<ProductPurchase[]> => {
+        try {
+            if (USE_MOCK) {
+                return [
+                    { Id: 101, Name: 'Mock Serum', Price: 999, Quantity: 1, Purchased: new Date().toISOString() }
+                ];
+            }
+
+            const response = await client.get(`/customer/${customerId}/history/products`);
+            const data = response.data;
+
+            if (!Array.isArray(data)) return [];
+
+            return data.map((item: any) => ({
+                Id: item.Id,
+                Name: item.Name,
+                Price: item.Price || 0,
+                Quantity: item.Quantity || 1,
+                Purchased: item.Purchased // ISO Date
+            }));
+
+        } catch (error) {
+            console.error("Hano Product History Error:", error);
             return [];
         }
     }
