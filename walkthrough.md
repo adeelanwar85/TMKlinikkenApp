@@ -33,7 +33,8 @@ Nytt "TM Kundeklubb" system er implementert.
     > **API Status:** Full Integrasjon er NÅ PÅ PLASS! 🚀
     > - **Stempler:** Henter behandlinger fra Hano.
     > - **Poeng:** Vi fant "Product History" endepunktet! Nå hentes alle produktkjøp automatisk hvis kundenummeret blir funnet via Telefon eller E-post.
-    > - **VIP:** Baseres på totalt forbruk (Behandling + Produkter) siste 12 mn.
+    > - **Begrensning:** Poeng/Stempler gis kun for aktivitet de **siste 12 mnd** ved første sync.
+    > - **VIP:** Baseres på totalt forbruk (Behandling + Produkter) siste 12 mn.år Hano gir tilgang til "Sales" eller "Receipt" API-et for å se produktkjøp.
 
 ### Visning
 *   Egen fane **"Kundeklubb"** (stjerne-ikon) i bunnmenyen.

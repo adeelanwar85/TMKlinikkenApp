@@ -55,6 +55,7 @@
         - [ ] **Booking**: Swap "Avbestill" and "Flytt time" button positions
         - [x] **Hano**: Sync patient details (create customer) to Hano API on booking (Implemented lookup for Loyalty)
         - [x] **Loyalty**: Full Hano Integration (Treatments + Products) ✅
+        - [ ] **Loyalty**: Implement Redemption Logic (How to spend/reset points) <!-- id: 50 -->
         - [ ] **Admin**: Verify ability to add generic main menu buttons/elements
     - [ ] **Auth & Security**
         - [ ] **Superuser**: Document password recovery process
@@ -68,7 +69,9 @@
     - [x] **Infrastructure**: Restart server after substantial file changes
 
 - [ ] **Next Steps (Future Agents)** <!-- id: 37 -->
+    - [ ] **API Expansion (Wishlist)**:
+        - [ ] **Employees**: Fetch dynamic employee list from `/employee`
+        - [ ] **Profile**: Auto-fill customer address/city from `/customer/{id}`
+        - [ ] **Giftcards**: Explore `/giftcard` for in-app purchase possibility
     - [ ] **Remaining Icons**: Generate "V3" style icons for "Lege" and "Bestill time" cards <!-- id: 38 -->
-    - [ ] **Mobile Testing**: Verify safe areas and gradients on iOS/Android Simulators <!-- id: 39 -->
-    - [ ] **Mobile Testing**: Verify safe areas and gradients on iOS/Android Simulators <!-- id: 39 -->
-    - [x] **Deployment Config**: `app.json` configured with correct Bundle ID and Display Name. <!-- id: 40 -->
+    - [ ] **Deployment Config**: `app.json` configured with correct Bundle ID and Display Name. <!-- id: 40 -->

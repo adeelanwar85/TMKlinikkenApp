@@ -1,31 +1,36 @@
-# Progress Handoff 🏁
+# Progress Handoff - TM Klinikken App
 
-**Date:** 2026-01-03
-**Status:** Stable / Ready for Deploy Prep
+**Dato:** 04.01.2026
+**Status:** ✅ Lojalitetssystem Fullført (Stempler + Produkter)
+**Neste Fokus:** Push Varsler & App Store Klargjøring
 
-## ✅ Completed This Session
-1.  **Loyalty System (Refined):**
-    *   **Logic Split:** Implemented strict separation between Treatment Stamps (Wellness > 1500) and Product Points (10%).
-    *   **API Probing:** Validated Hano API limitations (No Sales endpoint yet). Logic handles this gracefully.
-    *   **VIP:** Verified calculation based on 12-month rolling history.
-2.  **Admin & Visuals:**
-    *   **Visual Consistency:** Updated `TreatmentDetail` logic to apply "Intro Card" styling to any section starting with Hva/Hvordan/Om/Hvorfor.
-    *   **Documentation:** Updated `AI_COPILOT_GUIDE.md` with system architecture for future agents.
-3.  **Deployment Ready:**
-    *   Configured `app.json` with correct names and Bundle IDs.
+## 🏆 Dagens Store Seier (The "Bingo" Moment)
+Vi løste det største hinderet: **Produktpoeng**.
+Ved å analysere Swagger-skjermbildene nøye, fant vi at `POST /customer/search` krevde et spesifikt skjema. Dette åpnet døren til `GET /customer/{id}/history/products`.
+- **Hva virker nå:**
+    - Appen finner automatisk Hano-kundenummeret ditt via Telefon eller E-post.
+    - Den laster ned hele kjøpshistorikken.
+    - Den gir **10% poeng** på alle kvalifiserte produkter (Exuviance, etc.).
+    - Den gir **Stempler** på alle kvalifiserte behandlinger (>1500 kr).
+    - **Sikkerhet:** Den begrenser utdelingen til aktivitet de **siste 12 månedene** for å unngå "poeng-sjokk" ved installasjon.
 
-## 🚧 Work in Progress / Known Issues
-*   **Loyalty Points:** Code is ready, but dormant until Hano provides access to Sales/Receipt API.
-*   **Push Notifications:** Tested locally (simulated), ready for production keys.
+## 📂 Viktige Filer Oppdatert
+1.  `src/services/HanoService.ts`: Lagt til `findCustomerId` og `getCustomerProductHistory`.
+2.  `src/services/LoyaltyService.ts`: Full overhaling av `syncFullHistory`. Skiller nå mellom Behandling (Stempel) og Produkt (Poeng).
+3.  `app/(tabs)/_layout.tsx`: Sender nå med `user.email` til sync-funksjonen ved oppstart.
+4.  `docs/AI_COPILOT_GUIDE.md`: Oppdatert med detaljert API-logikk.
 
-## 📝 Next Steps for Next Session
-1.  **Mobile Testing:** Running on physical iOS/Android logic (safe areas).
-2.  **Store Submission:** Build `.ipa` / `.aab` via EAS.
+## 🚀 Plan for "Imorgen"
+Brukeren likte forslagene våre om å utnytte API-et bedre. Husk disse punktene:
 
-## 📂 Files Modified
-*   `app/(tabs)/booking/summary.tsx`: Reconstructed component.
-*   `app/(tabs)/loyalty.tsx`: New screen.
-*   `app/(tabs)/_layout.tsx`: Updated tabs.
-*   `app/(tabs)/index/index.tsx`: Added header shop icon.
-*   `src/services/LoyaltyService.ts`: Hano verification logic.
-*   `src/components/GlowCard.tsx`: UI fixes.
+1.  **Ansatte (`/employee`)**: Kan vi hente ansatte dynamisk til "Om oss" eller booking-filteret?
+2.  **Kundeprofil (`/customer/{id}`)**: Kan vi hente adresse/postnummer automatisk til "Min Profil"?
+3.  **Gavekort (`/giftcard`)**: Kan vi selge gavekort direkte i appen?
+4.  **Push Varsler**: Implementere/teste dette ordentlig før launch.
+5.  **Poenginnløsning (VIKTIG)**: Designe flyten for hvordan kunden bruker poeng, og hvordan vi nullstiller/trekker dem fra saldoen.
+
+## ⚠️ Kjente Småbugs
+- Ingen kritiske bugs kjent akkurat nå. Appen kjører stabilt.
+
+---
+*Klar til dyst!*
