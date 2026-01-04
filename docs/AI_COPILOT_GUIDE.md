@@ -48,10 +48,11 @@ Vi bruker en hybridmodell:
 *   **Dual Logic:** Vi skiller nå strengt mellom **Stempler** og **Poeng**.
     *   **Stempler (Treatments):** Gis for behandlinger > 1500,- som *ikke* er produkter. Sjekkes mot `WELLNESS_CATEGORIES` i `LoyaltyConfig.ts`.
     *   **Poeng (Products):** Gis for produkter definert i `PRODUCT_CATEGORIES` (10% poeng).
-        *   **NEW:** Vi bruker `POST /customer/search` (Email/Sms) + `GET /customer/{id}/history/products` for å hente faktisk kjøpshistorikk og gi poeng automatisk.
+        *   **NEW:** Vi bruker `POST /customer/search` (Email/Sms) + `GET /customer/{id}/history/products` for å hente faktisk kjøpshistorikk.
+        *   **RESTRICTION:** Vi gir kun poeng for kjøp gjort de **siste 12 månedene** for å unngå retroaktiv "bonus-sjokk" ved første installasjon.
 *   **Smart Sync:**
     *   Bookinger lagres lokalt som `UPCOMING`.
-    *   `syncFullHistory` henter historikk fra Hano (`/Activity`).
+    *   `syncFullHistory` henter historikk fra Hano (`/Activity` + Produkter).
     *   Sikkerhet: Sjekker alltid `Paid: true` fra Hano før utdeling.
 *   **VIP Status:** Beregnes basert på totalt forbruk (behandlinger + produkter) siste 12 mnd (>15k = Gull).
 

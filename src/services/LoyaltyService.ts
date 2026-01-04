@@ -187,28 +187,50 @@ export const LoyaltyService = {
                         total12MonthSpend += price;
                     }
 
-                    // Stamps/Points (Wellness Treatment)
-                    // Explicitly filter OUT products here (though usually appointments are services)
+                    // --- 2. POINTS & STAMPS (Wellness Only + Not Processed) ---
+                    // Skip if not paid or already processed
                     const categoryId = String(appt.CategoryId || '');
-                    const isProduct = isLoyaltyProduct(categoryId); // Should be false for pure treatments
-                    const isEligibleTreatment = isLoyaltyEligible(categoryId, price) && !isProduct;
+                    const isProduct = isLoyaltyProduct(categoryId);
+                    // Treatment check: Must be eligible AND NOT a product
+                    const isTreatment = isLoyaltyEligible(categoryId, price) && !isProduct;
 
-                    if (isPaid && isEligibleTreatment && !processedIds.has(appt.Id)) {
-                        console.log(`[Loyalty] Treatment Stamp Found: ${appt.Service}`);
-                        if (price >= LOYALTY_RULES.MIN_PRICE_FOR_STAMP) {
-                            // Award Stamp
-                            newStamps += 1;
+                    // RESTRICTION: Only award points/stamps for activity in the last 12 months
+                    // This prevents users getting rewards for very old history upon first install
+                    const isRecent = apptDate >= twelveMonthsAgo;
+
+                    if (isPaid && isRecent && !processedIds.has(appt.Id)) {
+                        let awardedAny = false;
+                        let p = 0;
+
+                        // A. PRODUCT POINTS
+                        if (isProduct) {
+                            console.log(`[Loyalty] Product Found: ${appt.Service} (${price} kr)`);
+                            p = Math.floor(price / 10); // 10% points on products
+                            newPoints += p; // Update newPoints for return value
+                            awardedAny = true;
+                        }
+
+                        // B. TREATMENT STAMPS
+                        if (isTreatment) {
+                            console.log(`[Loyalty] Treatment Found: ${appt.Service}`);
+                            // Stamps logic
+                            if (price >= LOYALTY_RULES.MIN_PRICE_FOR_STAMP) {
+                                newStamps += 1; // Update newStamps for return value
+                                awardedAny = true;
+                            }
+                        }
+
+                        if (awardedAny) {
                             updates++;
-
-                            // Log
+                            // Log this transaction so we don't count it again
                             await setDoc(doc(logsRef, String(appt.Id)), {
                                 hanoId: appt.Id,
                                 service: appt.Service,
                                 date: appt.Start,
                                 price: price,
-                                pointsAwarded: 0,
-                                isProduct: false,
-                                isTreatment: true,
+                                pointsAwarded: p, // Might be 0 if only stamp
+                                isProduct,
+                                isTreatment,
                                 processedAt: Date.now()
                             });
                         }
@@ -230,13 +252,15 @@ export const LoyaltyService = {
                     // Generate unique ID for log (Prefix to avoid collision with appts)
                     const uniqueId = `prod-${prod.Id}`;
 
-                    // VIP Spend
-                    if (prodDate >= twelveMonthsAgo && prodDate <= now) {
+                    // VIP Spend & Recency Check
+                    const isRecent = prodDate >= twelveMonthsAgo;
+
+                    if (isRecent && prodDate <= now) {
                         total12MonthSpend += price;
                     }
 
-                    // Product Points (10%)
-                    if (!processedIds.has(uniqueId)) {
+                    // Product Points (10%) - Only if recent
+                    if (isRecent && !processedIds.has(uniqueId)) {
                         console.log(`[Loyalty] Product Found: ${prod.Name} (${price} kr)`);
                         const p = Math.floor(price / 10);
                         newPoints += p;
