@@ -1,42 +1,31 @@
-# Progressive Handoff & Context
+# Progress Handoff 🏁
 
-**Date:** 02.01.2026
-**Project:** TM Klinikken App (React Native / Expo)
-**Last Action:** Fixed Critical Routing Bug & Started Debugging Admin Delete.
+**Date:** 2026-01-03
+**Status:** Stable / Ready for Deploy Prep
 
-## 🚨 Critical Context (Current Session)
-1.  **Routing Issue Resolved**: 
-    - The "Unmatched Route" error preventing navigation to sub-Treatments is **FIXED**.
-    - Solution involved removing a conflicting `app/(tabs)/index.tsx` file and correcting absolute paths in `app/(tabs)/index/index.tsx` and `app/(tabs)/index/treatment/[id]/index.tsx`.
-    - Validated in browser: full flow from Dashboard -> Treatment -> Sub-treatment works.
+## ✅ Completed This Session
+1.  **Loyalty System (Refined):**
+    *   **Logic Split:** Implemented strict separation between Treatment Stamps (Wellness > 1500) and Product Points (10%).
+    *   **API Probing:** Validated Hano API limitations (No Sales endpoint yet). Logic handles this gracefully.
+    *   **VIP:** Verified calculation based on 12-month rolling history.
+2.  **Admin & Visuals:**
+    *   **Visual Consistency:** Updated `TreatmentDetail` logic to apply "Intro Card" styling to any section starting with Hva/Hvordan/Om/Hvorfor.
+    *   **Documentation:** Updated `AI_COPILOT_GUIDE.md` with system architecture for future agents.
+3.  **Deployment Ready:**
+    *   Configured `app.json` with correct names and Bundle IDs.
 
-2.  **Admin Delete Bug (Unsolved)**: 
-    - **Issue**: Clicking "Slett hele denne kategorien" in Admin Panel does not work reliably. 
-    - **Current State**: Replaced native `alert/confirm` with a custom in-UI confirmation view to bypass platform issues. 
-    - **Blocker**: User reports an "Uncaught error" even with the new UI. Added logging to `performDelete` but haven't seen the specific error trace yet.
-    - **Next Step**: Debug the "Uncaught error" in `app/admin/content-editor/[id].tsx`.
+## 🚧 Work in Progress / Known Issues
+*   **Loyalty Points:** Code is ready, but dormant until Hano provides access to Sales/Receipt API.
+*   **Push Notifications:** Tested locally (simulated), ready for production keys.
 
-## 🧠 Permanent Context (From Previous Sessions)
-1.  **Admin CMS Details**:
-    - **URL**: `/admin`
-    - **PIN**: `1234`
-    - **Capabilities**: Create/Delete Categories, Sub-Treatments, and Content Blocks.
-2.  **Data Architecture**:
-    - **Source of Truth**: Firestore.
-    - **Local Backup**: `src/constants/Menu.ts`.
-    - **Sync Rule**: Use the "Seed" function in Admin to push local `Menu.ts` changes to cloud. Edits in Admin update Firestore directly.
-3.  **App Structure**:
-    - `app/(tabs)/index/`: Dashboard stack (User facing).
-    - `app/admin/content-editor/`: Admin CMS.
+## 📝 Next Steps for Next Session
+1.  **Mobile Testing:** Running on physical iOS/Android logic (safe areas).
+2.  **Store Submission:** Build `.ipa` / `.aab` via EAS.
 
-## 📝 Next Session Checklist
-1.  **Debug Admin Delete**: 
-    - Open `app/admin/content-editor/[id].tsx` and investigate the "Uncaught error". 
-    - Verify `ContentService.deleteTreatment` logic.
-2.  **Deployment Prep**: Configure `app.json` bundle IDs and prepare for App Store/Play Store.
-3.  **Mobile Testing**: Verify layout on true mobile simulators (iOS/Android).
-
-## 📂 Key Files
-*   `app/admin/content-editor/[id].tsx` (Focus for debugging delete)
-*   `src/services/ContentService.ts`
-*   `app/(tabs)/index/index.tsx` (Fixed routing)
+## 📂 Files Modified
+*   `app/(tabs)/booking/summary.tsx`: Reconstructed component.
+*   `app/(tabs)/loyalty.tsx`: New screen.
+*   `app/(tabs)/_layout.tsx`: Updated tabs.
+*   `app/(tabs)/index/index.tsx`: Added header shop icon.
+*   `src/services/LoyaltyService.ts`: Hano verification logic.
+*   `src/components/GlowCard.tsx`: UI fixes.

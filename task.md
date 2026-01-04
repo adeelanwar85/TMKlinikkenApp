@@ -31,49 +31,43 @@
     - [x] Replace Dashboard Cards with relevant aesthetic treatments <!-- id: 15 -->
     - [x] Fine-tune visual details (Fonts/Logos) to match website vibe <!-- id: 16 -->
 
-- [x] **Admin Panel Features**
-    - [x] **Generic Menu Support**: Add Support for "External Links" in Content Editor
-    - [x] **Documentation**: Create ADMIN_GUIDE.md and admin_cheat_sheet.md
-    - [x] **Access**: Verify PIN and Login logic (Admin vs Superuser)
-
-- [x] **UI & UX Polish**
-    - [x] **My Appointments**: Fix button order (Change Left, Cancel Right)
-    - [x] **Treatment Details**: Verify V3 Design Consistency
-
-- [ ] **Next Steps (Future Agents)** <!-- id: 37 -->
-    - [ ] **Mobile Testing**: Verify safe areas and gradients on iOS/Android Simulators <!-- id: 39 -->
-    - [ ] **Deployment**: Configure `app.json` bundle IDs and build standalone app <!-- id: 40 -->
-
-- [x] **Booking Flow & integration (EG Hano)** <!-- id: 41 -->
+- [ ] **Booking Flow & integration (EG Hano)** <!-- id: 41 -->
     - [x] **API**: Implement `hanoClient` with Mock Data toggle <!-- id: 42 -->
     - [x] **UI Polish**: Premium Gradient Headers, Custom Cards, Dynamic Icons <!-- id: 43 -->
         - [x] **Treatment List**: Mapped icons (Smiley, Drop, etc.) <!-- id: 44 -->
         - [x] **Calendar**: Fixed Web font (Sans-serif) <!-- id: 45 -->
     - [x] **Flow**: Navigation logic fixed (hiding native headers) <!-- id: 46 -->
-    - [x] **Notifications**: Implement local notifications (24h + 2h Reminders) <!-- id: 47 -->
+    - [x] **Notifications**: Implement local notifications (Confirmed working via `summary.tsx` & `NotificationService`) <!-- id: 47 -->
 
-- [x] **Sustainability & Handoff**
-    - [x] **AI Guide**: Create `docs/AI_COPILOT_GUIDE.md` for future agents
+- [ ] **Admin & Dynamic Content**
+    - [x] Implement Admin CMS with Firestore integration
+    - [x] Content Editor for Categories, Sub-treatments, and Blocks
+    - [x] **Bug Fix**: Fix "Delete Treatment" functionality in Admin Panel
+    - [x] **Bug Fix**: Fix "Delete Block" popup issue in Sub-treatment Editor
+    - [x] **Bug Fix**: Fix "Delete Sub-treatment" inline confirmation in Parent Editor
 
-- [x] **Roadmap: Kundeklubb (Loyalty)** 💎
-    - [x] **Config**: Create `LoyaltyConfig.ts` to map Medical (No) vs Wellness (Yes)
-    - [x] **Schema**: Add `stamps`, `points`, `vouchers` to User in Firestore
-    - [x] **UI**: Build "Glow Card" (Stamp View) and "Min Lommebok"
-    - [x] **Safety**: Implement Real-time Hano Check (Attendance + Payment 'Betalt av kunde').
-    - [x] **Bug Fixes**: Resolve Bundler 500 Global Error (Syntax in `summary.tsx`).
-    - [x] **GlowCard**: Fix crash due to missing `Small` import (replaced with `Caption`).
-    - [x] **Polish**: Integrate Logo in Card, Colored Status Dots, and Clearer Text explanation.
-    - [x] **Redesign (User Feedback)**:
-        - [x] Remove Red Banner (Clean White Layout).
-        - [x] Fix Logo Visibility (White Tint on Dark Red Card).
-        - [x] Fix Scrolling Overlap.
-        - [x] Finalize Layout & Text Content (Move intro below card, update VIP terms).
-        - [x] **Dynamic Content**: Make all Loyalty text editable via Admin Panel.
-    - [x] **Logic & Automation**:
-        - [x] **Stamps**: Working (via `/Activity`).
-        - [ ] **Points**: BLOCKED (API missing `/Sale` or `/Receipt` access for Products).
-        - [x] **VIP**: Partial (Counts Treatments only).
+- [ ] **Phase 3: Final Polish & User Requests (Batch 2)**
+    - [ ] **Visual Polish**
+        - [ ] **Splash Screen**: Create fun, animated splash (flashing icons under logo)
+        - [ ] **Slogan**: Change "Din skjønnhet..." to "- Hud, laser og legetjenester" on Login/Welcome
+        - [x] **Design Consistency**: Ensure all treatments match "Peelinger" pilot design (Intro Card Logic added for Hva/Hvordan/Om/Hvorfor)
+    - [ ] **Functionality**
+        - [ ] **Booking**: Swap "Avbestill" and "Flytt time" button positions
+        - [ ] **Hano**: Sync patient details (create customer) to Hano API on booking
+        - [ ] **Admin**: Verify ability to add generic main menu buttons/elements
+    - [ ] **Auth & Security**
+        - [ ] **Superuser**: Document password recovery process
+        - [ ] **Biometrics**: Verify FaceID/TouchID & PIN creation status
+        - [ ] **Login UI**: Add optional Address and Postcode fields
+        - [ ] **Login UI**: Add alternative login methods (PIN/Bio) to form
 
-- [x] **Navigation Restructure (User Request)**:
-  - [x] Replace 'Butikk' tab with 'Kundeklubb' (Loyalty).
-  - [x] Move 'Butikk' to Top Header (Right Icon).
+- [ ] **Critical Bug Fixes**
+    - [/] **Routing**: Fix "Unmatched Route" error for sub-treatments (e.g., `(tabs)/index/treatment/...`)
+    - [x] **Verification**: Ensure navigation works for both hardcoded and dynamic treatments
+    - [x] **Infrastructure**: Restart server after substantial file changes
+
+- [ ] **Next Steps (Future Agents)** <!-- id: 37 -->
+    - [ ] **Remaining Icons**: Generate "V3" style icons for "Lege" and "Bestill time" cards <!-- id: 38 -->
+    - [ ] **Mobile Testing**: Verify safe areas and gradients on iOS/Android Simulators <!-- id: 39 -->
+    - [ ] **Mobile Testing**: Verify safe areas and gradients on iOS/Android Simulators <!-- id: 39 -->
+    - [x] **Deployment Config**: `app.json` configured with correct Bundle ID and Display Name. <!-- id: 40 -->
