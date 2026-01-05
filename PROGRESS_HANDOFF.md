@@ -27,7 +27,12 @@ Brukeren likte forslagene våre om å utnytte API-et bedre. Husk disse punktene:
 2.  **Kundeprofil (`/customer/{id}`)**: Kan vi hente adresse/postnummer automatisk til "Min Profil"?
 3.  **Gavekort (`/giftcard`)**: Kan vi selge gavekort direkte i appen?
 4.  **Push Varsler**: Implementere/teste dette ordentlig før launch.
-5.  **Poenginnløsning (VIKTIG)**: Designe flyten for hvordan kunden bruker poeng, og hvordan vi nullstiller/trekker dem fra saldoen.
+5.  **Poenginnløsning (VIKTIG)**: Designe flyten for hvordan kunden bruker poeng (trekke fra saldo).
+    *   *Oppdatering:* Vi fant `GET /customer/{id}/bonuspoints/balance`! 
+    *   Plan: Bruk dette feltet hvis Hano konfigureres riktig, ellers bruk vår lokale utregning.
+6.  **Sikker Login ("Magic Link")**:
+    *   Vi fant `POST /customer/SendOneTimePassword` og `LoginWithoutPassword`.
+    *   Dette bør erstatte dagens enkle innlogging for maks sikkerhet.
 
 ## ⚠️ Kjente Småbugs
 - Ingen kritiske bugs kjent akkurat nå. Appen kjører stabilt.

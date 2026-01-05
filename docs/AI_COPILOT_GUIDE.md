@@ -38,6 +38,10 @@ Vi bruker en hybridmodell:
 *   Vi bruker en **mock-klient** (`HanoService.ts`) som standard.
 *   For å skru på ekte API, endre `USE_MOCK_DATA = false`.
 *   Priser og behandlinger hentes fra `services/HanoService.ts`.
+*   **NYTT (Funnet i Swagger):**
+    *   `GET /customer/{id}/bonuspoints/balance`: Henter Hano-beregnede poeng.
+    *   `POST /customer/SendOneTimePassword`: For SMS-innlogging (OTP).
+    *   `GET /customer/GetCustomerByMobile`: For oppslag ved login.
 
 ### 4. Varslinger (NotificationService)
 *   Bruker `expo-notifications`.
