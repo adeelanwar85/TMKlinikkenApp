@@ -5,8 +5,21 @@ import React, { useEffect } from 'react';
 import { useAuth } from '@/src/context/AuthContext';
 import { LoyaltyService } from '@/src/services/LoyaltyService';
 
+import { useRouter } from 'expo-router';
+
 export default function TabLayout() {
-    const { user } = useAuth();
+    const { user, isAuthenticated } = useAuth();
+    const router = useRouter();
+
+    // Kick out if not authenticated
+    useEffect(() => {
+        if (!isAuthenticated) {
+            // Wrap in timeout to avoid 'navigate before mount' error during initial render
+            setTimeout(() => {
+                router.replace('/');
+            }, 0);
+        }
+    }, [isAuthenticated]);
 
     // Auto-Sync Loyalty History on App Start
     useEffect(() => {

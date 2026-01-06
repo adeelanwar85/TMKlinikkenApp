@@ -60,6 +60,27 @@ Vi bruker en hybridmodell:
     *   Sikkerhet: Sjekker alltid `Paid: true` fra Hano før utdeling.
 *   **VIP Status:** Beregnes basert på totalt forbruk (behandlinger + produkter) siste 12 mnd (>15k = Gull).
 
+### 6. Hano API "Gullgruve" (Discovery 2026) 🕵️‍♂️
+Vi har scannet Swagger UI og funnet følgende endepunkter vi BØR utnytte:
+
+#### A. Gavekort (Gullgruve!)
+*   `GET /GiftCertificate`: Søk/Hent gavekort.
+*   `POST /GiftCertificate`: Kjøp nytt gavekort.
+*   `POST /GiftCertificate/SendByEmail/{id}`: Send digitalt gavekort.
+*   *Plan:* Implementer "Kjøp Gavekort" i appen (Min Side).
+
+#### B. Produkter & Nettbutikk
+*   `GET /Product`: Henter alle produkter (kan brukes til å lage "Butikk"-fane).
+*   `POST /Purchase`: Handlekurv/kjøp.
+*   `GET /product/search`: Søk.
+
+#### C. Venteliste
+*   `POST /customer/{customerId}/waitlist`: Sett kunde på venteliste ved fullbooket dag.
+*   `POST /urgent/search`: "Først til mølla"-timer?
+
+#### D. Lojalitet (Native)
+*   `GET /customer/{id}/punchcard/details`: Hano har faktisk innebygd stempelkort! Vi bør sjekke om dette kan erstatte vår lokale logikk på sikt.
+
 ---
 
 ## 🛠 Vanlige Oppgaver (How-To)

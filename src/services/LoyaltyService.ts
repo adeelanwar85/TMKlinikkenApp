@@ -132,6 +132,29 @@ export const LoyaltyService = {
                 });
                 return { updated: true, newPoints, newStamps };
             }
+
+            // --- NEW: AUTO-SYNC BALANCE FROM HANO (If user has valid Hano ID) ---
+            // Even if no new local bookings, we check if Hano has points update
+            const userProfile = userSnap.data();
+            if (userProfile && userProfile.hanoId) { // We assume hanoId is stored on user
+                try {
+                    console.log(`[Loyalty] Auto-syncing remote balance for ID: ${userProfile.hanoId}`);
+                    const remoteBalance = await HanoService.getBonusPointsBalance(userProfile.hanoId);
+                    if (remoteBalance > 0 && remoteBalance !== points) {
+                        console.log(`[Loyalty] Remote balance differs! Updating local: ${points} -> ${remoteBalance}`);
+                        await updateDoc(userRef, {
+                            'loyalty.points': remoteBalance
+                        });
+                        // Re-check tier
+                        if (remoteBalance >= LOYALTY_RULES.TIER_LIMITS.GOLD) tier = 'gull';
+                        await updateDoc(userRef, { 'loyalty.tier': tier });
+                        return { updated: true, newPoints: remoteBalance - points, newStamps: 0 };
+                    }
+                } catch (err) {
+                    console.warn("[Loyalty] Remote balance sync failed:", err);
+                }
+            }
+
             return { updated: false };
 
         } catch (e) {
@@ -240,13 +263,23 @@ export const LoyaltyService = {
 
             // --- 2. FETCH & PROCESS PRODUCTS ---
             // Only if we can match a Customer ID
+            let detectedHanoBalance = 0;
             const customerId = await HanoService.findCustomerId(phoneNumber, email);
+
             if (customerId) {
-                console.log(`[Loyalty] Found Hano Customer ID: ${customerId}. Fetching products...`);
-                const products = await HanoService.getCustomerProductHistory(customerId);
+                console.log(`[Loyalty] Found Hano Customer ID: ${customerId}. Fetching details...`);
+
+                // Fetch Balance & History in parallel
+                const [products, hanoBalance] = await Promise.all([
+                    HanoService.getCustomerProductHistory(customerId),
+                    HanoService.getBonusPointsBalance(customerId)
+                ]);
+
+                detectedHanoBalance = hanoBalance;
+                console.log(`[Loyalty] Hano Native Balance: ${hanoBalance}`);
 
                 for (const prod of products) {
-                    const prodDate = new Date(prod.Purchased);
+                    const prodDate = new Date(prod.Purchased).getTime();
                     const price = prod.Price || 0;
 
                     // Generate unique ID for log (Prefix to avoid collision with appts)
@@ -266,7 +299,7 @@ export const LoyaltyService = {
                         newPoints += p;
                         updates++;
 
-                        // Log
+                        // Log locally so user sees history
                         await setDoc(doc(logsRef, uniqueId), {
                             hanoId: uniqueId,
                             service: prod.Name,
@@ -299,7 +332,19 @@ export const LoyaltyService = {
             let { stamps, points, tier, activeVouchers } = currentLoyalty;
 
             stamps += newStamps;
-            points += newPoints;
+
+            // HYBRID BALANCE SYNC
+            if (detectedHanoBalance > 0) {
+                // Trust Hano (Single Source of Truth)
+                if (points !== detectedHanoBalance) {
+                    console.log(`[Loyalty] Syncing Points from Hano: ${points} -> ${detectedHanoBalance}`);
+                    points = detectedHanoBalance;
+                    updates++;
+                }
+            } else {
+                // Fallback: Trust Local Calc
+                points += newPoints;
+            }
 
             // Check Rewards
             while (stamps >= LOYALTY_RULES.STAMPS_REQUIRED_FOR_REWARD) {

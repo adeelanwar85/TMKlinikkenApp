@@ -134,19 +134,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return true;
     };
 
-    const logout = async () => {
-        if (hasPin) {
-            // Lock instead of wiping data
-            setIsLocked(true);
-            return;
-        }
+    const logout = async (fullCallback = true) => {
+        // If we want to support "Lock Only", we can add a param. 
+        // But "Logg ut" usually means "Exit".
+        // Let's ensure we actually clear auth so the user can test SMS login again.
 
-        // Full wipe if no PIN protection
         try {
             await AsyncStorage.removeItem('user_profile');
+            // Keep PIN? Maybe. If they log out, they might want to keep settings? 
+            // Usually Logout clears everything for security. 
+            // Let's clear user_profile but maybe keep PIN if we want "Quick Login" later?
+            // User asked for "Samme innloggingsside", implying they want to register/login again.
             setUser(null);
             setIsAuthenticated(false);
             setIsLocked(false);
+            // Optionally clear PIN too if we want a fresh start
+            // await SecureStore.deleteItemAsync('user_pin'); 
+            // setHasPin(false);
         } catch (error) {
             console.error('Logout failed', error);
         }

@@ -49,10 +49,27 @@ export default function ProfileScreen() {
         if (user?.email) LoyaltyService.syncPoints(user.email.toLowerCase().trim());
     }, [user?.email]);
 
-    const handleLogout = async () => {
-        const proceed = () => { logout(); router.replace('/'); };
+    const handleLogout = () => {
+        const proceed = async () => {
+            try {
+                await logout();
+                // Short timeout to ensure state propagates before routing
+                setTimeout(() => {
+                    router.replace('/');
+                }, 100);
+            } catch (e) {
+                console.error("Logout error", e);
+                router.replace('/');
+            }
+        };
+
         if (Platform.OS === 'web') {
-            if (window.confirm('Er du sikker på at du vil logge ut?')) proceed();
+            // Use a slight delay to allow UI to settle if valid
+            setTimeout(() => {
+                if (window.confirm('Er du sikker på at du vil logge ut?')) {
+                    proceed();
+                }
+            }, 100);
         } else {
             Alert.alert('Logg ut', 'Er du sikker på at du vil logge ut?', [
                 { text: 'Avbryt', style: 'cancel' },
@@ -117,6 +134,7 @@ export default function ProfileScreen() {
                         <GlowCard stamps={user?.loyalty?.stamps ?? 0} />
                     </View>
 
+
                     {/* Stats Row */}
                     <View style={styles.statsRow}>
                         <View style={styles.statItem}>
@@ -134,6 +152,17 @@ export default function ProfileScreen() {
                             </View>
                         </View>
                     </View>
+
+                    {/* Quick Access Actions */}
+                    <View style={{ marginTop: Spacing.m, paddingHorizontal: Spacing.m }}>
+                        <MenuItem
+                            icon="card-outline"
+                            title="Gavekort"
+                            onPress={() => router.push('/giftcard')}
+                            last
+                        />
+                    </View>
+
                 </View>
 
                 {/* Innstillinger Section */}

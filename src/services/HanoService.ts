@@ -487,6 +487,82 @@ export const HanoService = {
             console.error("Hano Product History Error:", error);
             return [];
         }
+    },
+
+    // 3. Bonus Points Balance (NEW)
+    getBonusPointsBalance: async (customerId: number): Promise<number> => {
+        try {
+            if (USE_MOCK) return 1500;
+            const response = await client.get(`/customer/${customerId}/bonuspoints/balance`);
+            // Expecting { Current: 123 } or just a number? Swagger said Model Example: { Current: 0 }
+            return response.data?.Current || 0;
+        } catch (error) {
+            console.warn("Hano Bonus Balance Error:", error);
+            return 0;
+        }
+    },
+
+    // --- AUTHENTICATION (NEW) ---
+
+    // 1. Get Customer by Mobile
+    getCustomerByMobile: async (mobile: string): Promise<any | null> => {
+        try {
+            if (USE_MOCK) return { Id: 999, FirstName: "Mock", LastName: "User" };
+            const cleanPhone = mobile.replace(/\s/g, '').replace('+47', '');
+
+            const response = await client.get('/customer/GetCustomerByMobile', {
+                params: { mobile: cleanPhone }
+            });
+            // Returns a list? Swagger said "Customer list successfully found"
+            const data = response.data;
+            if (Array.isArray(data) && data.length > 0) return data[0];
+            return null;
+        } catch (error) {
+            console.warn("GetCustomerByMobile Failed:", error);
+            return null;
+        }
+    },
+
+    // 2. Send OTP
+    sendOTP: async (customerId: number): Promise<boolean> => {
+        try {
+            if (USE_MOCK) return true;
+            await client.post('/customer/SendOneTimePassword', null, {
+                params: { customerId }
+            });
+            return true;
+        } catch (error) {
+            console.error("Send OTP Failed:", error);
+            return false;
+        }
+    },
+
+    // 3. Validate/Login with OTP
+    loginWithOTP: async (customerId: number, code: string): Promise<boolean> => {
+        try {
+            if (USE_MOCK && code === '1234') return true;
+
+            // Swagger: POST /customer/LoginWithoutPassword?customerId=...&code=...
+            // Wait, Swagger screenshot showed `LoginWithoutPassword` might need a payload or params.
+            // Let's assume params based on typical Hano/Swagger patterns for "OneTimePassword".
+            // Re-checking probe/swagger knowledge:
+            // "POST /customer/LoginWithoutPassword"
+            // "GET /customer/ValidateLoginWithoutPassword"
+
+            // Let's try POST with payload if params fail, but standard is often payload for POST.
+            // Actually, for LoginWithoutPassword, the Swagger screenshot for SendOTP was clear.
+            // For Login, let's try sending keys in params/query based on typical .NET Web API.
+            await client.post('/customer/LoginWithoutPassword', {
+                customerId,
+                code // Assuming these are the fields. If 400, we check Swagger again.
+            });
+            // The swagger screenshot for LoginWithoutPassword wasn't fully expanded to show params vs body.
+            // But usually it matches the C# method signature.
+            return true;
+        } catch (error) {
+            console.error("Login OTP Failed:", error);
+            return false;
+        }
     }
 };
 

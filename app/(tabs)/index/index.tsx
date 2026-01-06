@@ -112,7 +112,7 @@ export default function DashboardScreen() {
                         style={styles.headerLogo}
                         resizeMode="contain"
                     />
-                    <H2 style={styles.greeting}>Hei, {(user as any)?.name || (user as any)?.firstName || 'Gjest'} 👋</H2>
+                    <H2 style={styles.greeting}>Hei, {((user as any)?.name || (user as any)?.firstName || 'Gjest').split(' ')[0]} 👋</H2>
                     <H1 style={styles.mainQuestion}>Hva kan vi hjelpe deg med?</H1>
                 </View>
 
