@@ -52,6 +52,18 @@ export default function AdminScreen() {
                     <MenuCard key={item.id} item={item} onPress={() => router.push(item.route as any)} />
                 ))}
 
+                <H3 style={styles.sectionTitle}>Verktøy</H3>
+                <MenuCard
+                    item={{
+                        title: 'Loyalty Debug Panel',
+                        subtitle: 'Sjekk Hano Poeng & Status',
+                        icon: 'bug-outline',
+                        bg: '#FFEBEE',
+                        color: '#C62828'
+                    }}
+                    onPress={() => router.push('/admin/loyalty-debug')}
+                />
+
                 {/* System Section (Superuser) */}
                 {isSuperuser && (
                     <>

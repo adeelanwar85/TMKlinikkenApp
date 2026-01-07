@@ -41,7 +41,7 @@ Vi bruker en hybridmodell:
 *   **NYTT (Funnet i Swagger):**
     *   `GET /customer/{id}/bonuspoints/balance`: Henter Hano-beregnede poeng.
     *   `POST /customer/SendOneTimePassword`: For SMS-innlogging (OTP).
-    *   `GET /customer/GetCustomerByMobile`: For oppslag ved login.
+    *   `GET /customer/GetCustomerByMobile`: **PRIMÆR METODE** for oppslag ved login. (Email-søk er ustabilt).
 
 ### 4. Varslinger (NotificationService)
 *   Bruker `expo-notifications`.
@@ -52,22 +52,25 @@ Vi bruker en hybridmodell:
 *   **Dual Logic:** Vi skiller nå strengt mellom **Stempler** og **Poeng**.
     *   **Stempler (Treatments):** Gis for behandlinger > 1500,- som *ikke* er produkter. Sjekkes mot `WELLNESS_CATEGORIES` i `LoyaltyConfig.ts`.
     *   **Poeng (Products):** Gis for produkter definert i `PRODUCT_CATEGORIES` (10% poeng).
-        *   **NEW:** Vi bruker `POST /customer/search` (Email/Sms) + `GET /customer/{id}/history/products` for å hente faktisk kjøpshistorikk.
-        *   **RESTRICTION:** Vi gir kun poeng for kjøp gjort de **siste 12 månedene** for å unngå retroaktiv "bonus-sjokk" ved første installasjon.
+        *   **Deep Sync:** Vi henter nå FULL historikk via `HanoService.syncFullHistory`.
+        *   **Datakilde:** `GET /customer/{id}/history` (Past) + `GET /customer/{id}/activities` (Active).
+        *   **Quirk:** Hano History API returnerer et paginert objekt `{ Items: [...] }`. `HanoService` pakker ut dette automatisk.
+        *   **RESTRICTION:** Vi gir kun poeng for kjøp gjort de **siste 12 månedene** for å unngå retroaktiv "bonus-sjokk".
 *   **Smart Sync:**
     *   Bookinger lagres lokalt som `UPCOMING`.
-    *   `syncFullHistory` henter historikk fra Hano (`/Activity` + Produkter).
-    *   Sikkerhet: Sjekker alltid `Paid: true` fra Hano før utdeling.
+    *   `syncFullHistory` kjøres ved visning av Profil («Min Side»).
+    *   Sikkerhet: Sjekker alltid `Paid: true` (eller `Invoiced: true`) fra Hano før utdeling.
 *   **VIP Status:** Beregnes basert på totalt forbruk (behandlinger + produkter) siste 12 mnd (>15k = Gull).
 
 ### 6. Hano API "Gullgruve" (Discovery 2026) 🕵️‍♂️
 Vi har scannet Swagger UI og funnet følgende endepunkter vi BØR utnytte:
 
-#### A. Gavekort (Gullgruve!)
-*   `GET /GiftCertificate`: Søk/Hent gavekort.
-*   `POST /GiftCertificate`: Kjøp nytt gavekort.
-*   `POST /GiftCertificate/SendByEmail/{id}`: Send digitalt gavekort.
-*   *Plan:* Implementer "Kjøp Gavekort" i appen (Min Side).
+#### A. Gavekort (Implementert ✅)
+*   **Løsning:** WebView Redesign.
+*   **Flyt:** Brukeren kjøper via `app/giftcard.tsx`, som wrapper nettsiden men med "TM Glød"-design.
+*   **Auto-utfylling:** Script fyller ut brukernavn/epost automatisk.
+*   **Balance Check:** Bruker `POST /Activity/giftcertificate/validate` for å sjekke saldo nativt.
+*   *Legacy Plan:* `POST /GiftCertificate` API var blokkert, så vi bruker WebView.
 
 #### B. Produkter & Nettbutikk
 *   `GET /Product`: Henter alle produkter (kan brukes til å lage "Butikk"-fane).

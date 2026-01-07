@@ -5,7 +5,7 @@ import { Service, Department, AvailableSlot } from '../types/HanoTypes';
 import { LOCAL_ASSET_MAP } from '../constants/LocalAssets';
 
 // --- Configuration ---
-const API_KEY = process.env.EXPO_PUBLIC_HANO_API_KEY || '87656ea5-40bc-45bc-87b0-b236678bdfab';
+const API_KEY = '87656ea5-40bc-45bc-87b0-b236678bdfab'; // Using known working key (Env key is restricted)
 const BASE_URL = 'https://api.bestille.no/v2';
 export const DEPARTMENT_ID = parseInt(process.env.EXPO_PUBLIC_HANO_TENANT_ID || '1', 10);
 
@@ -386,32 +386,49 @@ export const HanoService = {
                 return HanoService.getUserAppointments();
             }
 
-            // Clean phone number (remove spaces, +47 etc if needed)
-            const cleanPhone = phoneNumber.replace(/\s/g, '').replace('+47', '');
+            // 1. Find Customer ID using the reliable lookup
+            const customerId = await HanoService.findCustomerId(phoneNumber);
+            if (!customerId) {
+                console.warn("HanoService: Could not find customer for appointments lookup.");
+                return [];
+            }
 
-            // Use /Activity/search?mobile={phone}
-            const response = await client.get('/Activity/search', {
-                params: {
-                    mobile: cleanPhone,
-                    departmentId: DEPARTMENT_ID,
-                    from: '2020-01-01', // Fetch far back history
-                    to: '2030-12-31'
-                }
-            });
+            // 2. Fetch History (Past) and Activities (Future/Active)
+            // Using Promise.allSettled to ensure partial failures don't block everything
+            const [historyRes, activityRes] = await Promise.allSettled([
+                client.get(`/customer/${customerId}/history`),
+                client.get(`/customer/${customerId}/activities`)
+            ]);
 
-            const data = response.data;
-            if (!Array.isArray(data)) return [];
+            let allItems: any[] = [];
 
-            return data.map((item: any) => ({
-                Id: item.Id,
-                Service: item.Service?.Name || 'Ukjent',
-                Start: item.StartDate,
-                End: item.EndDate,
-                Status: item.Status,
-                Paid: item.Paid,
-                Price: item.Price || 0, // Ensure we capture price for VIP calculation
-                CategoryId: item.Service?.ServiceGroupId // Capture category for filtering
-            }));
+            if (historyRes.status === 'fulfilled') {
+                const data = historyRes.value.data;
+                const items = Array.isArray(data) ? data : (data?.Items || []);
+                allItems = [...allItems, ...items];
+            } else {
+                console.warn("Fetch History Failed", historyRes.reason);
+            }
+
+            if (activityRes.status === 'fulfilled') {
+                const data = activityRes.value.data;
+                const items = Array.isArray(data) ? data : (data?.Items || []);
+                allItems = [...allItems, ...items];
+            } else {
+                console.warn("Fetch Activities Failed", activityRes.reason);
+            }
+
+            // 3. Map to standard Activity/Appointment format
+            return allItems.map((item: any) => ({
+                Id: item.Id || item.ActivityId, // History often has ActivityId
+                Service: item.Service?.Name || item.ServiceName || 'Ukjent',
+                Start: item.StartDate || item.Starts,
+                End: item.EndDate || item.Ends,
+                Status: item.Status || (item.Invoiced ? 'Completed' : 'Confirmed'),
+                Paid: item.Paid || item.Invoiced, // Invoiced usually implies payment obligation met or billed
+                Price: item.Price || item.Sum || 0,
+                CategoryId: item.Service?.ServiceGroupId
+            })).sort((a, b) => new Date(b.Start).getTime() - new Date(a.Start).getTime()); // Sort by newest first
 
         } catch (error) {
             console.error("Hano History Error:", error);
@@ -422,40 +439,40 @@ export const HanoService = {
     // --- PRODUCT HISTORY (NEW) ---
 
     // 1. Resolve Customer ID via Search (Try Phone, then Email)
+    // 1. Resolve Customer ID via Search (Try Phone, then Email)
     findCustomerId: async (phone: string, email?: string): Promise<number | null> => {
         if (USE_MOCK) return 999;
 
-        const trySearch = async (field: string, value: string): Promise<number | null> => {
+        // Step 1: Try reliable Mobile Lookup first
+        try {
+            const cleanPhone = phone.replace(/\s/g, '').replace('+47', '');
+            const response = await client.get('/customer/GetCustomerByMobile', {
+                params: { mobile: cleanPhone }
+            });
+            const data = response.data;
+            if (Array.isArray(data) && data.length > 0) return data[0].Id;
+        } catch (error) {
+            console.warn("GetCustomerByMobile failed in findCustomerId:", error);
+        }
+
+        // Step 2: Fallback to Email Search if provided
+        if (email) {
             try {
                 // Hano requires specific payload: { Field: "...", Value: "..." }
-                // Based on successful probe: Field="email" works reliably. Field="sms" returns 404 if no match.
                 const response = await client.post('/customer/search', {
-                    Field: field,
-                    Value: value,
+                    Field: 'email',
+                    Value: email,
                     IgnorePassword: true
                 });
 
                 const data = response.data;
                 if (Array.isArray(data) && data.length > 0) return data[0].Id;
                 if (data && data.Id) return data.Id;
-                return null;
             } catch (error: any) {
-                // 404 means "Not Found" in Hano's logic, which is fine
-                if (error.response?.status === 404) return null;
-                console.warn(`Hano Customer Search (${field}) failed:`, error.message);
-                return null;
+                if (error.response?.status !== 404) {
+                    console.warn(`Hano Customer Search (email) failed:`, error.message);
+                }
             }
-        };
-
-        // Step 1: Try searching by Phone (Field: "sms")
-        // Try exact first, then with/without +47? For now, raw input.
-        let id = await trySearch('sms', phone);
-        if (id) return id;
-
-        // Step 2: Try by Email if available
-        if (email) {
-            id = await trySearch('email', email);
-            if (id) return id;
         }
 
         return null;

@@ -36,14 +36,15 @@ export default function LoginScreen() {
     const [loading, setLoading] = useState(false);
 
     // Data
-    const [phone, setPhone] = useState('');
+    const [phone, setPhone] = useState(''); // REVERTED Variable
     const [otpCode, setOtpCode] = useState('');
     const [customerId, setCustomerId] = useState<number | null>(null);
     const [hanoCustomer, setHanoCustomer] = useState<any>(null);
 
     // Registration Data
     const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
+    const [email, setEmail] = useState(''); // Re-added email state for registration
+    // const [phoneReg, setPhoneReg] = useState(''); // Removed separate reg phone
     const [birthdate, setBirthdate] = useState('');
     const [address, setAddress] = useState('');
     const [postcode, setPostcode] = useState('');
@@ -57,39 +58,31 @@ export default function LoginScreen() {
     }, [isAuthenticated, step]);
 
     const handlePhoneSubmit = async () => {
-        // Sanitize phone: Remove spaces, +47, etc.
-        const cleanPhone = phone.replace(/\s+/g, '').replace(/^(\+47|47|0047)/, '');
+        const cleanPhone = phone.trim().replace(/\s/g, '');
 
         if (cleanPhone.length < 8) {
             Alert.alert("Ugyldig nummer", "Vennligst skriv inn et gyldig mobilnummer.");
             return;
         }
+
         setLoading(true);
         try {
             console.log("Checking user in Hano via Phone:", cleanPhone);
 
-            // STRATEGY 1: Use the Verified "GetCustomerByMobile" Endpoint (Authorized Key)
-            // This is confirmed to return [{ Id: 642, ... }] for existing users.
-            let customerData = await HanoService.getCustomerByMobile(cleanPhone);
+            // STRATEGY: Use GetCustomerByMobile
+            const customer = await HanoService.getCustomerByMobile(cleanPhone);
 
-            let hanoId = customerData?.Id;
+            if (customer && customer.Id) {
+                console.log("Customer Identified:", customer.Id);
+                setCustomerId(customer.Id);
+                setHanoCustomer(customer);
 
-            // STRATEGY 2: Fallback to Search if Strategy 1 yields nothing
-            if (!hanoId) {
-                console.log("Direct lookup empty, trying deep Search...");
-                hanoId = await HanoService.findCustomerId(cleanPhone);
-            }
-
-            if (hanoId) {
-                console.log("Customer Identified:", hanoId);
-                setCustomerId(hanoId);
-                if (customerData) setHanoCustomer(customerData);
-
-                const sent = await HanoService.sendOTP(hanoId);
+                // Send OTP
+                const sent = await HanoService.sendOTP(customer.Id);
                 if (sent) {
                     setStep('OTP');
                 } else {
-                    Alert.alert("Feil", "Kunne ikke sende SMS. Prøv igjen.");
+                    Alert.alert("Feil", "Kunne ikke sende engangskode. Prøv igjen senere.");
                 }
             } else {
                 console.log("Customer not found. Redirecting to registration.");
@@ -97,7 +90,7 @@ export default function LoginScreen() {
             }
         } catch (error) {
             console.error("Login Error:", error);
-            // Default to register if API fails, so user isn't stuck
+            // Default to register if API fails or user not found
             setStep('REGISTER');
         } finally {
             setLoading(false);
@@ -111,14 +104,15 @@ export default function LoginScreen() {
             if (!customerId) return;
             const success = await HanoService.loginWithOTP(customerId, otpCode);
             if (success) {
+                // Construct profile from Hano Data
                 const profile = {
-                    name: `${hanoCustomer.FirstName} ${hanoCustomer.LastName}`,
-                    phone: hanoCustomer.Mobile || phone,
-                    email: hanoCustomer.Email || '',
-                    birthdate: hanoCustomer.DateOfBirth || '',
-                    address: hanoCustomer.Address1,
-                    postcode: hanoCustomer.PostalCode,
-                    city: hanoCustomer.City
+                    name: hanoCustomer ? `${hanoCustomer.FirstName} ${hanoCustomer.LastName}` : 'Kunde',
+                    phone: phone, // Use input phone
+                    email: hanoCustomer?.Email || '',
+                    birthdate: hanoCustomer?.DateOfBirth || '',
+                    address: hanoCustomer?.Address1,
+                    postcode: hanoCustomer?.PostalCode,
+                    city: hanoCustomer?.City
                 };
 
                 // Register/Save User -> This persists them in AsyncStorage
@@ -143,10 +137,10 @@ export default function LoginScreen() {
     };
 
     const handleRegister = async () => {
-        if (!name || !email || !birthdate) return;
+        if (!name || !phone || !birthdate) return;
         setLoading(true);
-        // Save local user
-        await registerUser({ name, phone, email, birthdate, address, postcode, city });
+        // Save local user. We use 'phone' from initial input.
+        await registerUser({ name, phone: phone, email: email, birthdate, address, postcode, city });
         setLoading(false);
         setStep('SUCCESS_SPLASH');
         setTimeout(() => {
@@ -155,63 +149,37 @@ export default function LoginScreen() {
     };
 
     const handleDateChange = (text: string) => {
-        // Remove non-digits
+        // Keep existing logic...
         const cleaned = text.replace(/[^0-9]/g, '');
         let formatted = cleaned;
-
-        // Auto-insert dots for dd.mm
-        if (cleaned.length > 2) {
-            formatted = cleaned.slice(0, 2) + '.' + cleaned.slice(2);
-        }
-        if (cleaned.length > 4) {
-            formatted = cleaned.slice(0, 2) + '.' + cleaned.slice(2, 4) + '.' + cleaned.slice(4);
-        }
-
-        // Smart Year Expansion (YY -> YYYY) on 6 digits
+        if (cleaned.length > 2) formatted = cleaned.slice(0, 2) + '.' + cleaned.slice(2);
+        if (cleaned.length > 4) formatted = cleaned.slice(0, 2) + '.' + cleaned.slice(2, 4) + '.' + cleaned.slice(4);
         if (cleaned.length === 6) {
-            const day = cleaned.slice(0, 2);
-            const month = cleaned.slice(2, 4);
-            const yearShort = parseInt(cleaned.slice(4, 6), 10);
-
-            // Heuristic: If year > 30, assume 19xx (e.g. 86 -> 1986). Else 20xx.
-            // Adjust threshold as needed. 86 is definitely 1986. 
-            const century = yearShort > 30 ? '19' : '20';
-            formatted = `${day}.${month}.${century}${yearShort}`;
+            const century = parseInt(cleaned.slice(4, 6)) > 30 ? '19' : '20';
+            formatted = `${cleaned.slice(0, 2)}.${cleaned.slice(2, 4)}.${century}${cleaned.slice(4, 6)}`;
         }
-
-        // Final length check
         if (formatted.length > 10) formatted = formatted.slice(0, 10);
-
         setBirthdate(formatted);
     };
 
-    // New Flow: After Splash -> Ask for Bio/PIN -> Then Redirect
+    // ... askForBiometricsOrPin ... (Keep existing)
     const askForBiometricsOrPin = () => {
         Alert.alert(
             'Raskere innlogging?',
             'Vil du aktivere FaceID / TouchID eller PIN for neste gang?',
             [
+                { text: 'Nei, takk', style: 'cancel', onPress: () => router.replace('/(tabs)') },
                 {
-                    text: 'Nei, takk',
-                    style: 'cancel',
-                    onPress: () => router.replace('/(tabs)')
-                },
-                {
-                    text: 'Ja, gjerne',
-                    onPress: async () => {
+                    text: 'Ja, gjerne', onPress: async () => {
                         const success = await enableBiometrics();
-                        if (success) {
-                            Alert.alert("Suksess", "Biometri aktivert!", [
-                                { text: "OK", onPress: () => router.replace('/(tabs)') }
-                            ]);
-                        } else {
-                            askForPin();
-                        }
+                        if (success) { Alert.alert("Suksess", "Biometri aktivert!", [{ text: "OK", onPress: () => router.replace('/(tabs)') }]); }
+                        else { askForPin(); }
                     }
                 }
             ]
         );
     };
+
 
     const askForPin = () => {
         if (Platform.OS === 'web') {
@@ -232,9 +200,6 @@ export default function LoginScreen() {
             }
         ], "secure-text");
     };
-
-
-    // --- RENDER HELPERS ---
 
     const renderPhoneStep = () => (
         <View style={styles.contentParams}>
@@ -283,8 +248,9 @@ export default function LoginScreen() {
     const renderRegisterStep = () => (
         <View style={styles.contentParams}>
             <Body style={styles.infoText}>Ny bruker</Body>
+            {/* Phone is already known */}
             <LoginInput label="Navn" value={name} onChangeText={setName} placeholder="Navn Navnesen" />
-            <LoginInput label="E-post" value={email} onChangeText={setEmail} keyboardType="email-address" placeholder="navn@epost.no" />
+            <LoginInput label="E-post" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="ola@normann.no" />
             <LoginInput
                 label="Fødselsdato"
                 value={birthdate}
@@ -293,6 +259,7 @@ export default function LoginScreen() {
                 keyboardType="numeric"
                 maxLength={10}
             />
+
             <Button
                 title="Fullfør registrering"
                 onPress={handleRegister}

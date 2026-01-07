@@ -46,8 +46,15 @@ export default function ProfileScreen() {
     }, [hasBiometrics]);
 
     useEffect(() => {
-        if (user?.email) LoyaltyService.syncPoints(user.email.toLowerCase().trim());
-    }, [user?.email]);
+        if (user?.email && user?.phone) {
+            console.log("Triggering Full Loyalty Sync for:", user.name);
+            LoyaltyService.syncFullHistory(
+                user.email.toLowerCase().trim(),
+                user.phone,
+                user.email
+            );
+        }
+    }, [user?.email, user?.phone]);
 
     const handleLogout = () => {
         const proceed = async () => {
