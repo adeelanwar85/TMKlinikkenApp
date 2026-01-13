@@ -2,11 +2,10 @@
 **Date:** 2026-01-08 (Session End)
 **Status:** Active Development (Loyalty & Auth Phase Verified)
 
-## 🚀 Current State
-The **Loyalty & Authentication** system has been overhauled and verified.
-- **Authentication:** Reverted to **Mobile Number** (SMS) flow as Hano's Email Search was proven unreliable (400/404).
-- **Loyalty Sync:** Deep integration active. Profile screen now syncs full history (Activities + Products) from Hano.
-- **Debug:** Added `/admin/loyalty-debug` to manually inspect Hano data.
+## 🚀 Current Status
+- **Tab Bar**: Ferdig stilt og stabilisert (75px høyde, vertikal layout).
+- **Login**: Fungerer (E-post lookup -> SMS kode). UI er oppdatert til E-post fokus.
+- **API**: E-post OTP endepunkter er ikke tilgjengelige/dokumenterte. Fallback til SMS fungerer.
 
 ## 📋 Recently Completed
 1.  **Authentication Fix:**

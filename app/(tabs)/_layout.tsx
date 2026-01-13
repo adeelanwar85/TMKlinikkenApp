@@ -43,9 +43,21 @@ export default function TabLayout() {
                 tabBarStyle: {
                     borderTopColor: Colors.primary.deep,
                     backgroundColor: Colors.primary.deep,
-                    height: 60,
-                    paddingBottom: 8,
+                    height: 70, // Slightly reduced from 75, still safe
                     paddingTop: 8,
+                    paddingBottom: 16, // Simulating Safe Area bottom
+                },
+                tabBarItemStyle: {
+                    flexDirection: 'column', // FORCE Vertical Layout
+                    justifyContent: 'center',
+                    paddingBottom: 4, // Fine-tune placement
+                },
+                tabBarLabelStyle: {
+                    fontSize: 10,
+                    fontWeight: '500',
+                    marginBottom: 0,
+                    paddingBottom: 0,
+                    marginTop: 2, // Space between icon and text
                 },
                 tabBarIcon: ({ focused, color, size }) => {
                     let iconName: keyof typeof Ionicons.glyphMap;
@@ -64,7 +76,7 @@ export default function TabLayout() {
                         iconName = 'help-circle';
                     }
 
-                    return <Ionicons name={iconName} size={size} color={color} />;
+                    return <Ionicons name={iconName} size={20} color={color} />;
                 },
             })}
         >

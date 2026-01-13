@@ -444,28 +444,32 @@ export const HanoService = {
         if (USE_MOCK) return 999;
 
         // Step 1: Try reliable Mobile Lookup first
-        try {
-            const cleanPhone = phone.replace(/\s/g, '').replace('+47', '');
-            const response = await client.get('/customer/GetCustomerByMobile', {
-                params: { mobile: cleanPhone }
-            });
-            const data = response.data;
-            if (Array.isArray(data) && data.length > 0) return data[0].Id;
-        } catch (error) {
-            console.warn("GetCustomerByMobile failed in findCustomerId:", error);
+        if (phone) {
+            try {
+                const cleanPhone = phone.replace(/\s/g, '').replace('+47', '');
+                const response = await client.get('/customer/GetCustomerByMobile', {
+                    params: { mobile: cleanPhone }
+                });
+                const data = response.data;
+                if (Array.isArray(data) && data.length > 0) return data[0].Id;
+            } catch (error) {
+                console.warn("GetCustomerByMobile failed in findCustomerId:", error);
+            }
         }
 
         // Step 2: Fallback to Email Search if provided
         if (email) {
             try {
-                // Hano requires specific payload: { Field: "...", Value: "..." }
+                // Hano requires specific payload: { Field: "...", Value: "...", IgnorePassword: true }
+                // Verified working: Post { Field: 'email', Value: '...', IgnorePassword: true }
                 const response = await client.post('/customer/search', {
                     Field: 'email',
-                    Value: email,
+                    Value: email.trim(),
                     IgnorePassword: true
                 });
 
                 const data = response.data;
+                // Handle direct object or array
                 if (Array.isArray(data) && data.length > 0) return data[0].Id;
                 if (data && data.Id) return data.Id;
             } catch (error: any) {
@@ -476,6 +480,31 @@ export const HanoService = {
         }
 
         return null;
+    },
+
+    getCustomer: async (id: number) => {
+        if (USE_MOCK) return null;
+        try {
+            const response = await client.get(`/customer/${id}`);
+            const data = response.data;
+            if (!data) return null;
+
+            // Normalize Hano's /customer/{id} response to match GetCustomerByMobile structure
+            return {
+                Id: data.Id,
+                FirstName: data.Fields?.name || data.Name,
+                LastName: data.Fields?.surname || '',
+                Email: data.Fields?.email,
+                Mobile: data.Fields?.phone2 || data.Fields?.phone1,
+                Address1: data.Fields?.address1, // Guessing field names based on inspect
+                PostalCode: data.Fields?.zip,
+                City: data.Fields?.city,
+                DateOfBirth: data.Fields?.birthdate
+            };
+        } catch (error) {
+            console.warn("getCustomer failed:", error);
+            return null;
+        }
     },
 
     // 2. Fetch Product Purchases

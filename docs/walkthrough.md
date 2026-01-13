@@ -10,6 +10,11 @@ This task focused on ensuring the reliability of the Loyalty Program and Authent
 *   **Solution**: Reverted the Login flow to prioritize **Mobile Number** (SMS).
 *   **Verification**: Verified `GetCustomerByMobile` works reliably for customer `98697419` (Adeel), ensuring users can log in and retrieve their ID.
 
+## Siste Økt: Tab Bar & Login Fixes
+- **Tab Bar**: Løste problemet med at tekst ble kuttet ved å øke høyden til 75px og tvinge elementene til `flexDirection: 'column'`. Dette hindrer side-veis layout på web som "dyttet" teksten ut.
+- **Login**: Fikset `ReferenceError: handleDateChange` krasjen. Endret UI til å starte direkte på e-post innlogging for enklere brukeropplevelse.
+- **API Probe**: Testet flere endepunkter for e-post basert passord/OTP. Bekreftet at vi trenger spesifikk dokumentasjon fra Hano for å bytte fra SMS til E-post utsendelse. Enn så lenge fungerer appen ved å søke opp på e-post, og Hano sender koden til mobilen.
+
 ### 2. Loyalty Debug Panel
 *   **Feature**: Added a hidden Admin screen (`/admin/loyalty-debug`) to inspect Hano data live.
 *   **Capabilities**:

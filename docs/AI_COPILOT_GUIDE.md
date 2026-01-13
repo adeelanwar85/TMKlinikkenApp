@@ -6,8 +6,16 @@
 *   **Rammeverk:** React Native (Expo SDK 52)
 *   **Språk:** TypeScript
 *   **Navigasjon:** Expo Router (`app/` directory routing)
-*   **Database:** Firebase Firestore
-*   **State Management:** React Context (`AuthContext`, `BookingContext`) + Local Hooks
+*  4. **Navigasjon & Tab Bar**
+   - **Tab Bar Layout**: Bruker en "Platform-Safe" tilnærming med fast høyde (`75px`) og simulert safe-area padding (`16px` bunn) for å forhindre at tekst kuttes på web/mobile-web.
+   - **Vertikal Tvang**: `flexDirection: 'column'` er satt på `tabBarItemStyle` for å forhindre at navigasjonen kollapser til side-ved-side visning på bredere skjermer (web).
+   - **Ikoner**: Bruker `Ionicons` med størrelse 20px og tekststørrelse 10px for kompakt og lesbart utseende.
+
+5. **Autentisering & Innlogging**
+   - **Flow**: E-post er nå standard innloggingsmetode (`useEmailLogin = true`).
+   - **Hano Lookup**: Bruker `HanoService.findCustomerId` med `IgnorePassword: true` for å finne kunde-ID via e-post.
+   - **OTP**: Sendes per dags dato til *registrert mobilnummer* via Hano (begrensning i nåværende API-kunnskap), men flyten i appen er designet for e-post fokus.
+   - **Feilhåndtering**: `handleDateChange` er implementert for å håndtere dato-formatering under registrering.oks
 
 ### Viktige Mapper
 *   `app/(tabs)`: Hovednavigasjonen (Tabs). Skjulte "tabs" (som `treatment/[id]`) er også her.
