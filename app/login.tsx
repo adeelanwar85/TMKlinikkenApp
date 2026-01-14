@@ -95,8 +95,8 @@ export default function LoginScreen() {
                 setCustomerId(foundId);
                 setHanoCustomer(foundCustomer);
 
-                // Send OTP (It goes to the registered MOBILE on file, regardless of login method)
-                const sent = await HanoService.sendOTP(foundId);
+                // Send OTP (Email priority if available, otherwise SMS)
+                const sent = await HanoService.sendOTP(foundId, useEmailLogin ? email : undefined);
                 if (sent) {
                     setStep('OTP');
                 } else {
@@ -114,9 +114,89 @@ export default function LoginScreen() {
         }
     };
 
-    // ... (Keep OTP Logic same) ...
+    const handleOtpSubmit = async () => {
+        if (!otpCode || otpCode.length < 4) {
+            Alert.alert("Mangler kode", "Vennligst skriv inn engangskoden.");
+            return;
+        }
+        setLoading(true);
+        try {
+            // Verify with Hano
+            const valid = await HanoService.loginWithOTP(customerId!, otpCode);
+            if (valid) {
+                // Formatting name
+                let fullName = "Ukjent";
+                if (hanoCustomer) {
+                    fullName = [hanoCustomer.FirstName, hanoCustomer.LastName].filter(Boolean).join(' ');
+                }
 
-    // ... (Keep Register Logic same) ...
+                // Register logic (Save to valid user state)
+                await registerUser({
+                    name: fullName,
+                    phone: hanoCustomer?.Mobile || phone,
+                    email: hanoCustomer?.Email || email,
+                    birthdate: hanoCustomer?.DateOfBirth || '',
+                    address: hanoCustomer?.Address1,
+                    postcode: hanoCustomer?.PostalCode,
+                    city: hanoCustomer?.City,
+                    loyalty: { stamps: 0, points: 0, tier: 'bronse', activeVouchers: [] }
+                });
+
+                // Trigger FaceID prompt if supported
+                const bioSuccess = await enableBiometrics();
+
+                setStep('SUCCESS_SPLASH');
+
+                // Allow splash to show for a moment
+                setTimeout(() => {
+                    router.replace('/(tabs)');
+                }, 2000);
+
+            } else {
+                Alert.alert("Feil kode", "Koden stemmer ikke. Prøv igjen.");
+            }
+        } catch (error) {
+            console.error("OTP Error:", error);
+            Alert.alert("Feil", "Noe gikk galt under verifisering.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRegister = async () => {
+        if (!name || !email || !birthdate) {
+            Alert.alert("Mangler info", "Vennligst fyll ut navn, e-post og fødselsdato.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            // For now, we only register locally since we don't have a public CreateCustomer endpoint verified.
+            // Auto-formatting
+            await registerUser({
+                name,
+                email,
+                phone: phone, // Note: Phone might be empty if we used Email login flow for reg? 
+                // Actually if they came to Register via Email flow, phone might be unknown. 
+                // But the Register UI doesn't ask for Phone if we hid it?
+                // Wait, renderRegisterStep input list: Name, Email, Birthdate. NO PHONE.
+                // We should probably ask for phone if it's missing?
+                // For now, we'll store what we have.
+                birthdate,
+                loyalty: { stamps: 0, points: 0, tier: 'bronse', activeVouchers: [] }
+            });
+
+            setStep('SUCCESS_SPLASH');
+            setTimeout(() => {
+                router.replace('/(tabs)');
+            }, 2000);
+
+        } catch (error) {
+            Alert.alert("Feil", "Kunne ikke registrere bruker.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleDateChange = (text: string) => {
         // Keep existing logic...

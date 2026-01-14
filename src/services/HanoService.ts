@@ -569,14 +569,28 @@ export const HanoService = {
         }
     },
 
-    // 2. Send OTP
-    sendOTP: async (customerId: number): Promise<boolean> => {
+    // 2. Send OTP (Supports SMS via CustomerID or Email via Reminder)
+    sendOTP: async (customerId: number, email?: string): Promise<boolean> => {
         try {
             if (USE_MOCK) return true;
+
+            // Strategy A: If we have an email, use SendPasswordReminder (Email OTP)
+            if (email) {
+                console.log("[HanoService] Sending OTP via Email to:", email);
+                await client.post('/customer/SendPasswordReminder', {
+                    Field: 'email',
+                    Value: email
+                });
+                return true;
+            }
+
+            // Strategy B: Default to SMS via CustomerID
+            console.log("[HanoService] Sending OTP via SMS to CustomerID:", customerId);
             await client.post('/customer/SendOneTimePassword', null, {
                 params: { customerId }
             });
             return true;
+
         } catch (error) {
             console.error("Send OTP Failed:", error);
             return false;

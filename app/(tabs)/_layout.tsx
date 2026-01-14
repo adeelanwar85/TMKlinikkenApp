@@ -2,6 +2,7 @@ import { Colors } from '@/src/theme/Theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React, { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { useAuth } from '@/src/context/AuthContext';
 import { LoyaltyService } from '@/src/services/LoyaltyService';
 
@@ -43,21 +44,24 @@ export default function TabLayout() {
                 tabBarStyle: {
                     borderTopColor: Colors.primary.deep,
                     backgroundColor: Colors.primary.deep,
-                    height: 70, // Slightly reduced from 75, still safe
-                    paddingTop: 8,
-                    paddingBottom: 16, // Simulating Safe Area bottom
+                    height: Platform.OS === 'ios' ? 85 : 65, // Explicit height for iOS safe area, compact for others
+                    paddingTop: 6,
+                    paddingBottom: Platform.OS === 'ios' ? 20 : 6, // iOS needs safe area padding, others minimal
+                    shadowColor: 'transparent',
                 },
                 tabBarItemStyle: {
-                    flexDirection: 'column', // FORCE Vertical Layout
+                    flexDirection: 'column',
                     justifyContent: 'center',
-                    paddingBottom: 4, // Fine-tune placement
+                    height: '100%',
+                    paddingVertical: 4,
                 },
                 tabBarLabelStyle: {
                     fontSize: 10,
                     fontWeight: '500',
-                    marginBottom: 0,
+                    marginTop: 2,
+                    marginBottom: 2,
                     paddingBottom: 0,
-                    marginTop: 2, // Space between icon and text
+                    // Note: No fixed height here allows it to grow if needed
                 },
                 tabBarIcon: ({ focused, color, size }) => {
                     let iconName: keyof typeof Ionicons.glyphMap;

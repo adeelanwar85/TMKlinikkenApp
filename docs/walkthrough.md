@@ -42,6 +42,11 @@ This task focused on ensuring the reliability of the Loyalty Program and Authent
 > **Points Logic**: `debug_simulate_sync_logic.js` confirmed the app can iterate through the Hano history stream.
 > **Service Fix**: `HanoService.ts` was patched to handle the `{ Items: [...] }` response structure, ensuring data is not ignored.
 
+### Admin Panel Improvements
+> [!SUCCESS]
+> **Manual Override**: Implemented in `/admin/loyalty-debug`. Admins can now manually award Stamps and Points to users by ID, useful for corrections.
+> **Campaigns & Push**: Verified that creating a campaign with "Send Push" enabled correctly calls the notification service.
+
 ## Next Steps
 *   **User Testing**: Log in with real credentials on the physical device to see the "Glød" status update live.
 *   **Refinement**: Monitor the "Full Sync" performance on Profile load; consider caching if it becomes too slow.

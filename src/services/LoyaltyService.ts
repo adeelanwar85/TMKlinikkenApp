@@ -384,5 +384,60 @@ export const LoyaltyService = {
             console.error("[Loyalty] Sync Full History Error:", e);
             return { updated: false, error: e };
         }
+    },
+
+    /**
+     * MANUAL OVERRIDES (Admin Panel)
+     */
+    awardManualStamp: async (userId: string) => {
+        try {
+            const userRef = doc(db, 'users', userId);
+            const userSnap = await getDoc(userRef);
+            if (!userSnap.exists()) throw new Error("User not found");
+
+            let { stamps, points, tier, activeVouchers } = userSnap.data().loyalty || { stamps: 0, points: 0, tier: 'bronse', activeVouchers: [] };
+
+            stamps += 1;
+
+            if (stamps >= LOYALTY_RULES.STAMPS_REQUIRED_FOR_REWARD) {
+                stamps -= LOYALTY_RULES.STAMPS_REQUIRED_FOR_REWARD;
+                const newVoucher = `FREE-FACIAL-MANUAL-${Date.now()}`;
+                activeVouchers = [...(activeVouchers || []), newVoucher];
+            }
+
+            await updateDoc(userRef, {
+                'loyalty.stamps': stamps,
+                'loyalty.activeVouchers': activeVouchers
+            });
+            return { success: true, newStamps: stamps };
+        } catch (error) {
+            console.error("Manual Stamp Error:", error);
+            throw error;
+        }
+    },
+
+    awardManualPoints: async (userId: string, amount: number) => {
+        try {
+            const userRef = doc(db, 'users', userId);
+            const userSnap = await getDoc(userRef);
+            if (!userSnap.exists()) throw new Error("User not found");
+
+            let { points, tier } = userSnap.data().loyalty || { stamps: 0, points: 0, tier: 'bronse', activeVouchers: [] };
+
+            points += amount;
+
+            // Simple tier check
+            if (points >= LOYALTY_RULES.TIER_LIMITS.GOLD) tier = 'gull';
+            else if (points >= LOYALTY_RULES.TIER_LIMITS.SILVER) tier = 'sølv';
+
+            await updateDoc(userRef, {
+                'loyalty.points': points,
+                'loyalty.tier': tier
+            });
+            return { success: true, newPoints: points };
+        } catch (error) {
+            console.error("Manual Points Error:", error);
+            throw error;
+        }
     }
 };

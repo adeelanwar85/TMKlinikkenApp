@@ -13,6 +13,9 @@ export default function LoyaltyDebugScreen() {
     const router = useRouter();
     const { user } = useAuth();
 
+    // State for local Firebase User
+    const [firebaseUserId, setFirebaseUserId] = useState<string | null>(null);
+
     // Default to known ID for quicker testing if available, or empty
     const [targetId, setTargetId] = useState('642');
     const [bookingIdInput, setBookingIdInput] = useState('');
@@ -40,15 +43,6 @@ export default function LoyaltyDebugScreen() {
         }
     };
 
-    const handleFetchProfileWrapper = (id: number) => {
-        // Wrapper to allow calling with specific ID
-        const tempId = targetId;
-        // We set state, but it might not update immediately for this run, so we passthrough if needed
-        // For simplicity, just let the user click "Check" or re-use existing logic
-        // But let's trigger handleFetchProfile logic:
-        fetchProfileById(id);
-    };
-
     const handleSearchByMobile = async () => {
         if (!mobileInput) {
             Alert.alert("Mangler mobilnummer", "Skriv inn et mobilnummer først");
@@ -57,14 +51,29 @@ export default function LoyaltyDebugScreen() {
         setLoading(true);
         addLog(`Searching for Customer by Mobile: ${mobileInput}...`);
         try {
-            const id = await HanoService.findCustomerId(mobileInput);
-            if (id) {
-                setTargetId(id.toString());
-                addLog(`✅ Found Customer ID: ${id}`);
-                // Optional: Auto-fetch profile
-                handleFetchProfileWrapper(id);
+            const hanoId = await HanoService.findCustomerId(mobileInput);
+            if (hanoId) {
+                setTargetId(hanoId.toString());
+                addLog(`✅ Found Hano ID: ${hanoId}`);
+
+                // Now try to find the linked Firebase User (Local App User)
+                // We assume the user has logged in and synced their Hano ID, or at least has the same phone number in profile
+                // This requires a query on the users collection. 
+                // Since this is admin code, we might not have a direct method exposed in AuthService to "search user by phone".
+                // We will implement a quick helper here or just alert the user if we can't find the local account.
+                // NOTE: For now, we only support manual overrides on users who have actually logged into the app.
+
+                // Hack: We don't have a "GetUserByPhone" global function. 
+                // We will ask the admin to enter the exact User ID (Email or Auth ID) if finding by phone is hard, 
+                // OR we just rely on the fact that we can't easily find the Firebase Doc ID without a cloud function or open read access.
+                // Let's TRY to just use the mobile number as a loose search if we stored it?
+                // Actually, our User Docs are often named by UID.
+
+                addLog("ℹ️ Manual overrides require the user to have an app account.");
+                addLog("ℹ️ Ask user for their 'User ID' from Profile > Debug if needed, or implement search.");
+
             } else {
-                addLog("❌ Customer NOT Found");
+                addLog("❌ Customer NOT Found in Hano");
                 Alert.alert("Ikke funnet", "Fant ingen kunde med dette nummeret via Hano API.");
             }
         } catch (e) {
@@ -78,78 +87,52 @@ export default function LoyaltyDebugScreen() {
         if (targetId) fetchProfileById(Number(targetId));
     };
 
-    const handleFetchHistory = async () => {
-        if (!targetId) return;
-        setLoading(true);
-        setHistory([]);
-        addLog(`Fetching Appointment History (Testing Fix)...`);
-        try {
-            // Updated to use the FIXED getCustomerAppointments method
-            // We need a dummy phone number if we only have ID?
-            // HanoService.getCustomerAppointments takes a PHONE NUMBER.
-            // But we have ID.
-            // Wait, getCustomerAppointments asks for Phone, resolves ID, then gets history.
-            // If we already have ID, we technically can't use getCustomerAppointments efficiently without providing phone again.
-            // But for Debug Panel, we usually searched by Mobile FIRST.
-            // If the user manually entered ID, we can't easily get Phone back unless we read profile (which we can't easily do publicly).
-
-            // Workaround: If we have mobileInput, use it. If not, ask user?
-            // Or verifying the FIX specifically requires providing a phone.
-
-            if (mobileInput) {
-                const apps = await HanoService.getCustomerAppointments(mobileInput);
-                addLog(`Fetched ${apps.length} Appointments.`);
-                setHistory(apps);
-                if (apps.length > 0) {
-                    addLog(`Most recent: ${apps[0].Start} - ${apps[0].Service} (${apps[0].Paid ? 'Paid' : 'Unpaid'})`);
-                }
-            } else {
-                addLog("⚠️ 'Get Appointments' requires Mobile Number (service logic). searching products instead...");
-                const products = await HanoService.getCustomerProductHistory(Number(targetId));
-                addLog(`Fetched ${products?.length || 0} Products.`);
-                setRawProfile({ products });
-            }
-
-        } catch (e) {
-            addLog(`Error: ${e}`);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleCheckPaidStatus = async () => {
-        if (!bookingIdInput) {
-            Alert.alert("Mangler ID", "Skriv inn en Booking ID først");
-            return;
-        }
-
-        setLoading(true);
-        addLog(`Probing Booking ID: ${bookingIdInput} ...`);
-        try {
-            const booking = await HanoService.getAppointment(bookingIdInput);
-            if (booking) {
-                addLog(`FOUND! Service: ${booking.Service}`);
-                addLog(`Status: ${booking.Status}`);
-                addLog(`PAID: ${booking.Paid ? 'YES ✅' : 'NO ❌'}`);
-                addLog(`Raw: ${JSON.stringify(booking)}`);
-            } else {
-                addLog("Booking not found or access denied.");
-            }
-        } catch (e) {
-            addLog(`Error: ${e}`);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // New: Resolve Firebase User
+    // For this MVP, we will allow the admin to manually paste a User ID (from users' profile) 
+    // OR we could create a lookup if we had a "phone" field index.
+    const [manualUserId, setManualUserId] = useState('');
 
     const handleAddStamp = async () => {
-        if (!user || !user.email) {
-            Alert.alert("Du må være logget inn i appen først.");
+        if (!manualUserId.trim()) {
+            Alert.alert("Mangler User ID", "Du må skrive inn App User ID for å gi stempler manuelt.");
             return;
         }
-        addLog("Adding 1 Stamp (Local Test)...");
-        Alert.alert("Info", "For å teste stempler, fullfør en booking-simulering eller rediger i Firebase.");
+        setLoading(true);
+        try {
+            const res = await LoyaltyService.awardManualStamp(manualUserId);
+            if (res.success) {
+                Alert.alert("Suksess", `Stempel gitt! Totalt nå: ${res.newStamps}`);
+                addLog(`✅ Awarded 1 Stamp to ${manualUserId}. New Balance: ${res.newStamps}`);
+            }
+        } catch (e) {
+            Alert.alert("Feil", "Kunne ikke gi stempel. Sjekk ID.");
+            addLog(`Error: ${e}`);
+        } finally {
+            setLoading(false);
+        }
     };
+
+    const handleAddPoints = async () => {
+        if (!manualUserId.trim()) {
+            Alert.alert("Mangler User ID", "Du må skrive inn App User ID.");
+            return;
+        }
+        setLoading(true);
+        try {
+            const res = await LoyaltyService.awardManualPoints(manualUserId, 100);
+            if (res.success) {
+                Alert.alert("Suksess", `100 Poeng gitt! Totalt nå: ${res.newPoints}`);
+                addLog(`✅ Awarded 100 Points to ${manualUserId}. New Balance: ${res.newPoints}`);
+            }
+        } catch (e) {
+            Alert.alert("Feil", "Kunne ikke gi poeng.");
+            addLog(`Error: ${e}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // ... existing wrapper functions ... 
 
     return (
         <SafeAreaView style={styles.container}>
@@ -164,8 +147,8 @@ export default function LoyaltyDebugScreen() {
 
                 {/* SEARCH USER */}
                 <View style={styles.card}>
-                    <H3 style={styles.cardTitle}>Find Customer</H3>
-                    <Caption>Search by Mobile (Hano)</Caption>
+                    <H3 style={styles.cardTitle}>1. Find Hano Customer</H3>
+                    <Caption>Search by Mobile to find Hano ID</Caption>
                     <TextInput
                         style={styles.input}
                         value={mobileInput}
@@ -173,12 +156,29 @@ export default function LoyaltyDebugScreen() {
                         keyboardType="phone-pad"
                         placeholder="Mobile Number (e.g. 98697419)"
                     />
-                    <ButtonSmall title="Search & Fill ID" onPress={handleSearchByMobile} />
+                    <ButtonSmall title="Search Hano" onPress={handleSearchByMobile} />
+                </View>
+
+                {/* MANUAL ACTIONS */}
+                <View style={[styles.card, { borderColor: Colors.primary.deep, borderWidth: 1 }]}>
+                    <H3 style={styles.cardTitle}>2. Manual Override (App Cloud)</H3>
+                    <Caption>Paste App User ID to manually award items.</Caption>
+                    <TextInput
+                        style={styles.input}
+                        value={manualUserId}
+                        onChangeText={setManualUserId}
+                        placeholder="App User ID (fra brukers profil)"
+                        autoCapitalize='none'
+                    />
+                    <View style={styles.row}>
+                        <ButtonSmall title="+ Give 1 Stamp" onPress={handleAddStamp} />
+                        <ButtonSmall title="+ Give 100 Points" onPress={handleAddPoints} />
+                    </View>
                 </View>
 
                 {/* PROBE ID */}
                 <View style={styles.card}>
-                    <H3 style={styles.cardTitle}>Hano Customer Probe</H3>
+                    <H3 style={styles.cardTitle}>3. Hano Deep Probe</H3>
                     <Caption>Enter Hano Customer ID (e.g. 642)</Caption>
                     <TextInput
                         style={styles.input}
@@ -189,13 +189,14 @@ export default function LoyaltyDebugScreen() {
                     />
 
                     <View style={styles.row}>
-                        <ButtonSmall title="Check Points" onPress={handleFetchProfile} />
-                        <ButtonSmall title="Check Appointments" onPress={handleFetchHistory} />
+                        <ButtonSmall title="Check Points (Hano)" onPress={handleFetchProfile} />
+                        {/* <ButtonSmall title="Check Appointments" onPress={handleFetchHistory} /> */}
                     </View>
                 </View>
 
                 {/* TRANSACTION VERIFICATION */
                 /* Keeping as is... */}
+                {/* 
                 <View style={styles.card}>
                     <H3 style={styles.cardTitle}>Transaction Verification</H3>
                     <Caption>Check if a specific Hano Appointment is 'PAID'</Caption>
@@ -210,6 +211,7 @@ export default function LoyaltyDebugScreen() {
                         <ButtonSmall title="Check Booking by ID" onPress={handleCheckPaidStatus} />
                     </View>
                 </View>
+                */}
 
                 {/* Console Log Output */}
                 <View style={styles.logContainer}>
